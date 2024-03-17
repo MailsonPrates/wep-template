@@ -105,7 +105,8 @@ class Start
 
     public function removeStart()
     {
-        unlink($this->flag);
+        if ( file_exists($this->flag) ) unlink($this->flag);
+        
         unlink(__DIR__. '/app-start');
     }
 

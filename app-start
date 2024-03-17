@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+
 (new Start())->run($argv);
 
 class Start
@@ -46,7 +47,10 @@ class Start
 
         $again = $has_started_before && $again;
 
-        Console::ask('Qual é o nome da aplicação?', function($name) use($again){
+        $dir_parts = explode("\\", __DIR__);
+        $default_name = end($dir_parts);
+
+        Console::ask("Qual é o nome da aplicação? (atual: $default_name)", function($name) use($again){
 
             $filename = __DIR__ . '/config/app.php';
             $content = file_get_contents($filename);
@@ -59,7 +63,7 @@ class Start
 
             $content = str_replace($prev_value, $name, $content);
             file_put_contents($filename, $content);
-        });
+        }, $default_name);
 
         Console::ask('Qual é a url?', function($url) use($again){
             $has_last_slash = substr($url, -1) == '/';
@@ -137,11 +141,11 @@ class Start
 
 class Console
 {
-    public static function ask($text='', $callback)
+    public static function ask($text='', $callback, $default='')
     {
         echo $text . ' ';
 
-        $input = trim( fgets( STDIN ) );
+        $input = trim( fgets( STDIN ) ) ?: $default;
 
         if ( !empty($input) ){
             $callback($input);

@@ -1,10 +1,11 @@
 /vendor/
 /.vscode
-.vscode
+#.vscode
 .DS_Store
 .theia
-.env
+#.env
 /storage/*
 !/storage/builds
 node_modules
 /app
+/app-start

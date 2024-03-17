@@ -3,7 +3,6 @@
 
 (new Start())->run($argv);
 
-
 class Start
 {
     private $flag = __DIR__.'/storage/log/started.txt';

@@ -1,0 +1,54 @@
+{
+	"App Middleware": {
+		"prefix": ["app middleware"],
+		"body": [
+			"<?php",
+			"\t",
+			"namespace App\\Common\\Middlewares;",
+			"\t",
+			"use App\\Core\\Http\\iMiddleware;",
+			"\t",
+			"class ${TM_FILENAME_BASE} implements iMiddleware",
+			"{",
+				"\t/**",
+				"\t* @param Request \\$request",
+				"\t* @param \\Closure \\$next",
+				"\t*/",
+				"\tpublic function handle(\\$request, \\$next)",
+				"\t{",
+					"\t\t${1:}",
+					"\t",
+					"\t\t\\$next();",
+					"\t\treturn true;",
+				"\t}",
+			"}"
+		]
+	},
+	
+	"App Module Middleware": {
+		"prefix": ["app module middleware"],
+		"body": [
+			"<?php",
+			"\t",
+			"namespace App\\Modules\\\\${TM_DIRECTORY/(.*Modules\\\\)(.*)(.*\\\\Middlewares)(.*)/${2:/capitalize}/}\\Middlewares;",
+			"\t",
+			"use App\\Core\\Http\\iMiddleware;",
+			"\t",
+			"class ${TM_FILENAME_BASE} implements iMiddleware",
+			"{",
+				"\t/**",
+				"\t* @param Request \\$request",
+				"\t* @param \\Closure \\$next",
+				"\t*/",
+				"\tpublic function handle(\\$request, \\$next)",
+				"\t{",
+					"\t\t${1:}",	
+					"\t",
+					"\t\t\\$next();",
+					"\t\treturn true;",
+				"\t}",
+			"}"
+		]
+	},
+
+}

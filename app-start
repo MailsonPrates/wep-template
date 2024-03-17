@@ -20,9 +20,11 @@ class Start
         // Executa comandos
         $this->handleInstalls();
 
+        // Atualiza gitignore
+        $this->handleGitIgnore();
+
         // Remove arquivos de start
         $this->removeStart();
-
     } 
 
     public function validateDependencies()
@@ -101,6 +103,11 @@ class Start
         echo "\n";
         echo 'Para entrar em modo DEV, execute o comando > npm run dev';
         echo "\n\n";
+    }
+
+    public function handleGitIgnore()
+    {
+
     }
 
     public function removeStart()

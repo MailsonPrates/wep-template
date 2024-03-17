@@ -1,0 +1,10 @@
+/vendor/
+/.vscode
+.vscode
+.DS_Store
+.theia
+.env
+/storage/*
+!/storage/builds
+node_modules
+/app

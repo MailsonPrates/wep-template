@@ -1,0 +1,19 @@
+{
+    "name": "wep/project",
+    "type": "project",
+    "description": "A project template to make creating new Wep projects easier.",
+    "keywords": ["wep"],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "App\\Core\\": "vendor/wep/framework/src/"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "wep/framework": "^1.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

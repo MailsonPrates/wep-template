@@ -107,7 +107,11 @@ class Start
 
     public function handleGitIgnore()
     {
+        $filename = __DIR__ . '/.gitignore';
 
+        $content = file_get_contents($filename);
+        $content = str_replace('#', '', $content);
+        file_put_contents($filename, $content);
     }
 
     public function removeStart()

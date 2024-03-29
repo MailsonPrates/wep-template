@@ -14,8 +14,7 @@ class Main implements iTemplate
      */
     public function build($route, $request, $template): string
     {
-        $is_dev = ENV == 'DEV';
-        $use_cache_booster = $is_dev;
+        $use_cache_booster = ENV_DEV;
 
         $html = $template->html([
             "title" => $route->view->title ?? "",
@@ -25,6 +24,8 @@ class Main implements iTemplate
                 ["link", ["rel" => "stylesheet", "href" => App::assets("css/vendor/bootstrap.css")]],
                 ["script", ["src" => App::assets("js/vendor/jquery.js")]],
                 ["script", ["src" => App::assets("js/vendor/bootstrap.js")]],
+
+                // Entry point
                 ["script", ['id' => 'main-script', "src" => App::assets("view/main.js", $use_cache_booster)]],
             ]
         ]);

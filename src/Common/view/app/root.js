@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
         <ToastProvider>
             <SidebarProvider>
                 <BrowserRouter basename={basename}>
-                    <Suspense fallback={<div>Loading...</div>}>
+                    <Suspense>
                         <Routes>
                            {RouteMaps()}
                         </Routes>

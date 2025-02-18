@@ -1,11 +1,11 @@
-import Main from "./index.js";
+import Clean from "./index.js";
 
-export default function Placeholder(){
-
-    return Main({
-        title: "Usuários",
+export default function CleanPlaceholder(){
+    return Clean({
+        title: $.div({
+            class: "placeholder rounded-5"
+        }),
         content: $.div({
-            key: "placeholder",
             class: "placeholder-glow",
             html: [
                 $.div({html: $.span({class: "placeholder col-6"})}),

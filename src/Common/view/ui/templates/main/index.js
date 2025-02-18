@@ -1,46 +1,40 @@
-import { Link } from "jeact";
+import React, {useEffect} from "react";
 import App from "app";
+import { Row, Col } from "react-bootstrap";
+import Breadcrumbs from "./breadcrumbs";
+import Nav from "./Nav";
+import Sidebar from "./Sidebar";
+import "./main.scss";
 
-export default function Main(props={}){
+const TemplateMain = ({title="Sem título", children, header, breadcrumbs}) => {
 
-    const menu = [
-        {title: "Pedidos", link: "/pedidos/"},
-        {title: "Pedido 123", link: "/pedidos/123"},
-        {title: "Pedido criar", link: "/pedidos/criar"},
-        {title: "Inválido", link: "/invalido"},
-        {title: "Home", link: "/"}
-    ];
+    useEffect(() => {
+        document.title = `${title} | ${App.data("title", "Wep")}`
+    }, [title]);
 
-    if ( props.title ){
-        document.title = `${props.title} | ${App.data("title", "Wep")}`;
-    }
+    const hasSidebar = true;
 
-    return $.div({
-        class: "main container-fluid",
-        html: $.div({
-            class: "row",
-            html: [
-                $.div({
-                    class: "col-sm-2 p-3 border h-100",
-                    html: menu.map(item => {
-                        return Link({
-                            href: item.link,
-                            class: "p-3 border-bottom d-block",
-                            html: item.title
-                        })
-                    })
-                }),
-                $.div({
-                    class: "col-sm-10 p-3 border h-100",
-                    html: [
-                        $.h1(props.title || "Sem título"),
-                        $.div({
-                            class: "mt-4",
-                            html: props.content || ""
-                        })
-                    ]
-                })
-            ]
-        })
-    })
+    return (
+        <div className="main">
+            <Nav />
+            <div className="container-fluid">
+                <Row>
+                    <Sidebar />
+                    <Col className={`p-3 h-100${hasSidebar ? ' ms-5' : ''}`} sm={hasSidebar ? "9" : "12"}>
+                    {header !== false && 
+                        <TemplateMain.Header>
+                            <TemplateMain.Title>{title}</TemplateMain.Title>
+                            {breadcrumbs !== false && <Breadcrumbs list={breadcrumbs} />}
+                        </TemplateMain.Header>}
+                        <div className="main-content mt-4 bg-white rounded-3 p-3">{children}</div>
+                    </Col>
+                </Row>
+            </div>
+        </div>
+    );
 }
+
+TemplateMain.Title = ({children}) => <h1 className="fw-light">{children || "Sem título"}</h1>;
+TemplateMain.Header = ({children}) => <div className="page-header">{children}</div>;
+
+export default TemplateMain;

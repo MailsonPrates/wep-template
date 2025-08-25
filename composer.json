@@ -1,7 +1,7 @@
 {
     "name": "wep/project",
     "type": "project",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "A project template to make creating new Wep projects easier.",
     "keywords": ["wep"],
     "license": "MIT",

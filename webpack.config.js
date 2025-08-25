@@ -1,5 +1,8 @@
 const path = require('path');
 const WatchModuleConfigPlugin = require("./webpack/watch-module-config-plugin");
+const CollectInjectedAssetsPlugin = require("./webpack/collect-injected-assets-plugin");
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   watch: true,
@@ -9,8 +12,14 @@ module.exports = {
   mode: 'development',
   entry: path.resolve(__dirname, 'src/Common/view/app/root.js'),
   output: {
-    filename: "view/[name].js",
-    path: path.resolve(__dirname, "public/assets/"),
+    filename: "[name].js",
+    path: path.resolve(__dirname, "public/assets/view/"),
+  },
+  optimization: {
+    splitChunks: {
+      chunks: "all",
+    },
+    runtimeChunk: "single",
   },
   module: {
     rules: [
@@ -47,7 +56,10 @@ module.exports = {
   },
 
   plugins: [
-    new WatchModuleConfigPlugin()
+    new WatchModuleConfigPlugin(),
+    new CleanWebpackPlugin(),
+    new HtmlWebpackPlugin(),
+    new CollectInjectedAssetsPlugin()
   ],
 
   resolve: {

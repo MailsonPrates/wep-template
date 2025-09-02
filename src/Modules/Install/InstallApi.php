@@ -4,6 +4,7 @@ namespace App\Modules\Install;
  
 use App\Core\Controller;
 use App\Core\DB;
+use App\Core\File;
 use App\Core\Response;
 use App\Modules\User\Services\SaveUser;
 
@@ -134,7 +135,7 @@ class InstallApi
         try {
 
             // Cria .env
-            //file_put_contents(DIR_CONFIG . '/.env', $this->buildEnvContent($data));
+            file_put_contents(DIR_CONFIG . '/.env', $this->buildEnvContent($data));
 
             // Cria tabela
             DB::query($this->queries);
@@ -153,6 +154,8 @@ class InstallApi
                 'username' => $data['username'],
                 'password' => $data['password']
             ]);
+
+            File::deleteAll(DIR_MODULES . '/Install');
 
             return $response->json($saveUser);
 

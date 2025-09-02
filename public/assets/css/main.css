@@ -297,5 +297,8 @@ form:not(.was-validated) .visibility-toggle,
 }
 
 #nprogress {
+    position: fixed;
+    left: 0;
+    right: 0;
     top: 0;
 }

@@ -37,7 +37,7 @@ class InstallApi
 
         CREATE TABLE `user` (
             `user_id` int(11) NOT NULL,
-            `active` tinyint(4) NOT NULL DEFAULT '1',
+            `status` varchar(50) NOT NULL DEFAULT 'ativado',
             `user_group_id` int(11) NOT NULL DEFAULT '1',
             `username` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
             `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,

@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const WatchModuleConfigPlugin = require("./webpack/watch-module-config-plugin");
 const CollectInjectedAssetsPlugin = require("./webpack/collect-injected-assets-plugin");
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
@@ -59,7 +60,10 @@ module.exports = {
     new WatchModuleConfigPlugin(),
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin(),
-    new CollectInjectedAssetsPlugin()
+    new CollectInjectedAssetsPlugin(),
+    new webpack.ProvidePlugin({
+      'React':     'react'
+    })
   ],
 
   resolve: {
@@ -76,3 +80,4 @@ module.exports = {
     }
   },
 };
+

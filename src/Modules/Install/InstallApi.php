@@ -30,6 +30,7 @@ class InstallApi
             `title` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
             `type` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
             `permission` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
+            `user_groups` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
             `link` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
             `external` tinyint(4) NOT NULL DEFAULT '0',
             `sort_order` int(11) NOT NULL

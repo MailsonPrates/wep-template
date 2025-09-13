@@ -28,6 +28,7 @@ class InstallApi
             `parent_id` int(11) NOT NULL,
             `menu_id` int(11) NOT NULL,
             `title` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+            `icon` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
             `type` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
             `permission` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
             `user_groups` varchar(255) COLLATE utf8_unicode_ci NOT NULL,

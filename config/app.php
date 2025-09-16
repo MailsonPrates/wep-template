@@ -13,5 +13,13 @@ return [
         'root' => dirname(__DIR__)
     ],
     'constants' => [],
-    'middlewares' => []
+    'middlewares' => [
+        'isLogged' => 'App\Modules\Login\Middlewares\IsLogged',
+        'checkPermission' => 'App\Modules\Admin\UserGroup\Middlewares\CheckPermission'
+    ],
+    'hooks' => [
+        'before_build' => [],
+        'each_route' => [],
+        'after_build' => []
+    ]
 ];

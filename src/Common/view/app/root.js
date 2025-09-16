@@ -1,10 +1,13 @@
 import RouteMaps from "route-maps";
 import React, { Suspense} from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes} from "react-router";
+import { BrowserRouter, Routes, Route} from "react-router";
 import { ToastProvider } from 'ui/ToastContext';
 import { SidebarProvider } from "ui/templates/main/SidebarContext";
 import App from "app";
+import ProgressBar from "ui/ProgressBar";
+import Error404 from "ui/error/Error404";
+import { ErrorProvider } from "ui/error/ErrorContext";
 
 document.addEventListener('DOMContentLoaded', function(event) {
     const root = createRoot(document.getElementById('app'));
@@ -14,10 +17,14 @@ document.addEventListener('DOMContentLoaded', function(event) {
         <ToastProvider>
             <SidebarProvider>
                 <BrowserRouter basename={basename}>
+                    <ProgressBar />
                     <Suspense>
-                        <Routes>
-                           {RouteMaps()}
-                        </Routes>
+                        <ErrorProvider>
+                            <Routes>
+                                {RouteMaps()}
+                                <Route path="*" element={<Error404 />} />
+                            </Routes>
+                        </ErrorProvider>
                     </Suspense>
                 </BrowserRouter>
             </SidebarProvider>

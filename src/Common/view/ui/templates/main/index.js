@@ -1,10 +1,11 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import App from "app";
 import { Row, Col } from "react-bootstrap";
 import Breadcrumbs from "./breadcrumbs";
 import Nav from "./Nav";
 import Sidebar from "./Sidebar";
 import "./main.scss";
+import SidebarMobile from "./SidebarMobile";
 
 const TemplateMain = ({title="Sem título", children, header, breadcrumbs}) => {
 
@@ -12,21 +13,24 @@ const TemplateMain = ({title="Sem título", children, header, breadcrumbs}) => {
         document.title = `${title} | ${App.data("title", "Wep")}`
     }, [title]);
 
+    const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+
     const hasSidebar = true;
 
     return (
         <div className="main">
-            <Nav />
+            <Nav toggleSidebarMobile={() => setShowSidebarMobile(value => !value)} />
             <div className="container-fluid">
                 <Row>
                     <Sidebar />
-                    <Col className={`p-3 h-100${hasSidebar ? ' ms-5' : ''}`} sm={hasSidebar ? "9" : "12"}>
+                    <SidebarMobile show={showSidebarMobile} close={() => setShowSidebarMobile(false)} />
+                    <Col className={`p-3 h-100${hasSidebar ? ' ms-md-5' : ''}`} sm={hasSidebar ? "9" : "12"}>
                     {header !== false && 
                         <TemplateMain.Header>
                             <TemplateMain.Title>{title}</TemplateMain.Title>
                             {breadcrumbs !== false && <Breadcrumbs list={breadcrumbs} />}
                         </TemplateMain.Header>}
-                        <div className="main-content mt-4 bg-white rounded-3 p-3">{children}</div>
+                        <div className="main-content mt-4 bg-white rounded-3 p-md-3">{children}</div>
                     </Col>
                 </Row>
             </div>

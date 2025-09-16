@@ -128,7 +128,6 @@
 							"\t\t\t\t['link', ['rel' => 'icon', 'href' => App::assets('images/favicon.png')]],",
 							"\t\t\t\t['link', ['rel' => 'stylesheet', 'href' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap']],",
 							"\t\t\t\t['link', ['rel' => 'stylesheet', 'href' => App::assets('css/vendor/bootstrap.css')]],",
-							"\t\t\t\t['script', ['src' => App::assets('js/vendor/jquery.js')]],",
 							"\t\t\t\t['script', ['src' => App::assets('js/vendor/bootstrap.js')]],",
 							"\t\t\t\t\t",
 							"\t\t\t\t// Entry point",

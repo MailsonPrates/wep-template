@@ -4,6 +4,7 @@ namespace App\Common\Templates;
 
 use App\Core\View\Template\iTemplate;
 use App\App;
+use App\Modules\User\User;
 
 class Main implements iTemplate
 {
@@ -23,7 +24,7 @@ class Main implements iTemplate
                 ["link", ["rel" => "stylesheet", "href" => "https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;700;900&display=swap"]],
                 ["link", ["rel" => "stylesheet", "href" => App::assets("css/vendor/bootstrap.css")]],
                 ["link", ["rel" => "stylesheet", "href" => App::assets("css/main.css")]],
-                ["script", ["src" => App::assets("js/vendor/jquery.js")]],
+                ['script', ['html' => 'window.App = {user: '.json_encode(User::getData()).'}']],
                 ...$view_assets
             ]
         ]);

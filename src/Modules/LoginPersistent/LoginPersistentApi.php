@@ -1,0 +1,1 @@
+<?php namespace App\Modules\LoginPersistent; use App\Core\Controller; /** * Classe controller responsável por implementar métodos * que lidam com as requisições vindas do front */class LoginPersistentApi{    use Controller; }

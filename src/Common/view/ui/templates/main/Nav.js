@@ -1,31 +1,44 @@
 import React from "react";
-import { Container, Dropdown, Navbar, NavItem } from "react-bootstrap";
+import { Button, Container, Dropdown, Navbar, NavItem } from "react-bootstrap";
 import { Link } from "react-router";
 import App from 'app';
-import { HiOutlineUser, HiOutlineArrowRightOnRectangle } from "react-icons/hi2";
+import { HiOutlineUser, HiOutlineArrowRightOnRectangle,
+     HiBars3, HiOutlineQuestionMarkCircle, HiOutlineBell  
+} from "react-icons/hi2";
 
-export default function Nav(props){
+export default function Nav({toggleSidebarMobile}){
+    
+    let user = App.data("user") || {};
 
-    let {firstname, nickname, profile_images} = App.data("user");
-    let name = nickname || firstname || [];
+    console.log({user})
 
-    console.log({name})
+    let nickname = user.nickname || "";
+    let firstname = user.firstname || "";
+    let profile_images = user.profile_images || {};
+   
+    let name = nickname || firstname || "";
 
-    let firstLetter = Array.isArray(name) && name.length ? 
-        name[0].toUpperCase()
-        : "";
+    let firstLetter = name ? name[0].toUpperCase() : "";
 
-    return <Navbar className="navbar-light bg-light">
-        <Container fluid>
-            <Navbar.Brand>
-                <Link className="navbar-brand" to="/">
-                    <img src="/assets/images/logo.png" alt="" />
-                </Link>
-           </Navbar.Brand>
+    return <Navbar className="navbar-light bg-light py-1">
+        <Container fluid className="ps-0 ps-md-3">
+            <div className="d-flex">
+                <Button className="d-md-none" variant="default" onClick={toggleSidebarMobile}>
+                    <HiBars3 className="fs-1" />
+                </Button>
+                <Navbar.Brand className="ps-3 ps-md-0">
+                    <Link className="navbar-brand" to="/">
+                        <img src="/assets/images/logo.png" alt="" width={100} height={45}/>
+                    </Link>
+                </Navbar.Brand>
+            </div>
             <div className="d-flex align-items-center">
+                <span className="me-4 fs-5 d-none" title="Avisos"><HiOutlineBell /></span>
+                <Link className="me-4 text-reset fs-5 d-none" to="" target="_blank" title="Central de Ajuda"><HiOutlineQuestionMarkCircle /></Link>
                 <Dropdown>
                     <Dropdown.Toggle className="d-flex align-items-center pointer" as={NavItem}>
-                        <div className="profile-image border bg-light" style={{height: '36px', width: '36px', borderRadius: "50%"}}>
+                        <span className="me-2 text-decoration-none d-none d-md-block">{name}</span>
+                        <div className="profile-image bg-white" style={{height: 36, width: 36, borderRadius: "50%"}}>
                             {
                                 profile_images.small
                                     ? <span className="img-thumbnails d-block" style={{
@@ -40,19 +53,18 @@ export default function Nav(props){
                                     }}>{firstLetter}</span>
                             }
                         </div>
-                        <span className="ms-2 text-decoration-none">{name}</span>
                     </Dropdown.Toggle>
                     <Dropdown.Menu align="end" className="shadow border-light">
                         <Dropdown.Item as="span">
                             <Link to="/user/profile/" className="text-decoration-none d-block text-secondary">
                                 <HiOutlineUser className="fs-4" />
-                                <span className="ms-2">Meu perfil</span>
+                                <span className="ms-2 title">Meus dados</span>
                             </Link>
                         </Dropdown.Item>
                         <Dropdown.Item as="span">
                             <Link to="/login/logout/" className="text-decoration-none d-block text-secondary">
                                 <HiOutlineArrowRightOnRectangle className="fs-4" />
-                                <span className="ms-2">Sair</span>
+                                <span className="ms-2 title">Sair</span>
                             </Link>
                         </Dropdown.Item>
                     </Dropdown.Menu>

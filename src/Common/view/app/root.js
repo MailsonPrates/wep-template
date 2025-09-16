@@ -6,7 +6,8 @@ import { ToastProvider } from 'ui/ToastContext';
 import { SidebarProvider } from "ui/templates/main/SidebarContext";
 import App from "app";
 import ProgressBar from "ui/ProgressBar";
-import Error404 from "ui/Error404";
+import Error404 from "ui/error/Error404";
+import { ErrorProvider } from "ui/error/ErrorContext";
 
 document.addEventListener('DOMContentLoaded', function(event) {
     const root = createRoot(document.getElementById('app'));
@@ -18,10 +19,12 @@ document.addEventListener('DOMContentLoaded', function(event) {
                 <BrowserRouter basename={basename}>
                     <ProgressBar />
                     <Suspense>
-                        <Routes>
-                           {RouteMaps()}
-                           <Route path="*" element={<Error404 />} />
-                        </Routes>
+                        <ErrorProvider>
+                            <Routes>
+                                {RouteMaps()}
+                                <Route path="*" element={<Error404 />} />
+                            </Routes>
+                        </ErrorProvider>
                     </Suspense>
                 </BrowserRouter>
             </SidebarProvider>

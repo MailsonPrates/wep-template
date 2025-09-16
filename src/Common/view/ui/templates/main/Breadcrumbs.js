@@ -1,10 +1,12 @@
 import React from "react";
 import { Link } from "react-router";
 import { HiOutlineHome } from "react-icons/hi2";
+import App from "app";
 
 export default function Breadcrumbs(props){
 
-    const list = props.list || [];
+    let list = props.list || [];
+    list = list.map(item => typeof item === "string" ? App.route(item) : item)
 
     list.unshift({
         title: "Início",

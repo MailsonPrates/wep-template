@@ -1,0 +1,23 @@
+{
+    "host": "",
+    "username": "",
+    "password": "",
+    "remotePath": "/",
+    "protocol": "ftp",
+    "port": 21,
+    "fileNameEncoding": "utf8",
+    "autoUpload": true,
+    "autoDelete": true,
+    "autoDownload": false,
+    "ignore": [
+        ".git",
+        "node_modules",
+        "/node_modules",
+        "/.vscode",
+        ".vscode", 
+        ".git", 
+        ".DS_Store",
+        ".theia", 
+        ".github"
+    ]
+}

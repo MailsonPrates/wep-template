@@ -66,7 +66,21 @@ class InstallApi
             `token` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
             `expire_at` datetime NOT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+        CREATE TABLE `login_persistent` (
+            `id` int(11) NOT NULL,
+            `selector` char(32) COLLATE utf8_unicode_ci NOT NULL,
+            `token_hash` char(64) COLLATE utf8_unicode_ci NOT NULL,
+            `user_id` int(11) NOT NULL,
+            `expires_at` datetime NOT NULL
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;    
         
+            ALTER TABLE `login_persistent`
+            ADD PRIMARY KEY (`id`);
+
+            ALTER TABLE `login_persistent`
+            MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
             ALTER TABLE `menu`
             ADD PRIMARY KEY (`id`);
 

@@ -2,7 +2,7 @@
 
 namespace App\Modules\User\Traits;
 
-use App\Core\Image;
+use App\Common\Tools\Image;
 use App\Core\Session;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Services\MenuService;

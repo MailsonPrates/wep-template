@@ -1,7 +1,7 @@
 import {MenuApi} from "api";
 import React, { useEffect, useState } from "react";
-import useReqToast from 'ui/useReqToast';
-import MainTemplate from "ui/templates/main";
+import {useReqToast} from 'hooks';
+import {MainTemplate} from "components";
 import { Button } from "react-bootstrap";
 import { HiOutlineTrash, HiMiniPlus, HiChevronDown, 
     HiArrowTurnDownRight, HiOutlinePlusCircle, HiOutlinePencilSquare  } from "react-icons/hi2";

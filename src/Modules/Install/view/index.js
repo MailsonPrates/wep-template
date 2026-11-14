@@ -2,7 +2,7 @@ import InstallForm from "./InstallForm";
 import {InstallApi} from "api";
 import React from "react";
 import { useState, useEffect } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link, Navigate, useSearchParams } from "react-router";
 import App from "app";
 
@@ -32,7 +32,7 @@ export default function Install(props){
     const [validated, setValidated] = useState(false);
 
     useEffect(() => {
-        document.title = `Instalar | ${App.data("title", "Wep")}`
+        document.title = `Instalar | ${App.config("title", "Wep")}`
     }, [props.title]);
 
 

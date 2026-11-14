@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Offcanvas, Button } from "react-bootstrap";
 import {MenuApi, UserGroupApi} from "api";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import Title from "./Title";
 import Type from "./Type";
 import Route from "./Route";

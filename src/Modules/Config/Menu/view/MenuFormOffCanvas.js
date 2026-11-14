@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import Name from "./Name";
 import { Form, Offcanvas, Button } from "react-bootstrap";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import {MenuApi} from "api";
 
 export default function MenuFormOffCanvas({config={}, children, onComplete}){

@@ -3,7 +3,7 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
 import { Button } from 'react-bootstrap';
 import { Link } from 'react-router';
-import Password from "ui/Password";
+import {Password} from "components";
 
 export default function LoginForm(props={}){
 

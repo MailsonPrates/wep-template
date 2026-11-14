@@ -1,12 +1,12 @@
 import {LoginApi} from "api";
 import React from "react";
 import { useState, useEffect } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link, useParams, useNavigate } from "react-router";
 import RecoveryForm from "./RecoveryForm";
 import App from "app";
 import { BsInfoCircle } from "react-icons/bs";
-import $ from "app/ref";
+import {$} from "helpers";
 
 export default function RecoveryUpdate(config){
 
@@ -25,7 +25,7 @@ export default function RecoveryUpdate(config){
     }, []);
 
     useEffect(() => {
-        document.title = `Criar nova senha | ${App.data("title", "Wep")}`
+        document.title = `Criar nova senha | ${App.config("title", "Wep")}`
     }, [config.title]);
 
     const Core = {

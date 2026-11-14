@@ -84,12 +84,15 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.jsx'],
       alias: {
         bs: path.resolve(__dirname, 'node_modules/react-bootstrap/'),
-        ui: path.resolve(__dirname, 'src/Common/view/ui/'),
-        app: path.resolve(__dirname, 'src/Common/view/app/'),
+        app: path.resolve(__dirname, 'src/app/'),
+        core: path.resolve(__dirname, 'src/app/core/'),
+        components: path.resolve(__dirname, 'src/app/components/'),
+        hooks: path.resolve(__dirname, 'src/app/hooks/'),
+        contexts: path.resolve(__dirname, 'src/app/contexts/'),
+        services: path.resolve(__dirname, 'src/app/services/'),
         modules: path.resolve(__dirname, 'src/Modules/'),
         storage: path.resolve(__dirname, 'storage/'),
         "route-maps": path.resolve(__dirname, "storage/builds/route-maps.build.js"),
-        core: path.resolve(__dirname, 'src/Common/view/app/core/'),
         api: path.resolve(__dirname, 'storage/builds/apis/'),
       }
     }

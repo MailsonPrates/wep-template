@@ -1,7 +1,7 @@
 import LoginForm from "./LoginForm";
 import {LoginApi} from "api";
 import { useState, useEffect } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link, useSearchParams } from "react-router";
 import RecoveryMessage from "./recovery/RecoveryMessage";
 import App from "app";
@@ -20,7 +20,7 @@ export default function Login(props){
     const [validated, setValidated] = useState(false);
 
     useEffect(() => {
-        document.title = `Login | ${App.data("title", "Wep")}`
+        document.title = `Login | ${App.config("title", "Wep")}`
     }, [props.title]);
 
 

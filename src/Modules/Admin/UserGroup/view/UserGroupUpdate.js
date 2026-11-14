@@ -1,4 +1,4 @@
-import MainTemplate from "ui/templates/main";
+import {MainTemplate} from "components";
 import UserGroupForm from "./common/UserGroupForm";
 import React from "react";
 import { useParams } from "react-router";

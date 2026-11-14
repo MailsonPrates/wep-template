@@ -1,4 +1,4 @@
-import MainTemplate from "ui/templates/main";
+import {MainTemplate} from "components";
 import UserForm from "./common/UserForm";
 import { Link } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";

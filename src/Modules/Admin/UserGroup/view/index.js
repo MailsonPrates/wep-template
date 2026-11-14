@@ -1,9 +1,8 @@
 
-import React, { useEffect, useState, useLoca } from "react";
-import MainTemplate from "ui/templates/main";
-import useReqToast from 'ui/useReqToast';
+import React, { useEffect, useState } from "react";
+import {MainTemplate, Empty} from "components";
+import {useReqToast} from 'hooks';
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
-import Empty from "ui/Empty";
 import {UserGroupApi} from "api";
 import { Link, useLocation } from "react-router";
 

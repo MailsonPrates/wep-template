@@ -1,6 +1,5 @@
-import MainTemplate from "ui/templates/main";
+import {MainTemplate} from "components";
 import UserInviteForm from "./common/UserInviteForm";
-import React from "react";
 
 import { useNavigate } from "react-router";
 

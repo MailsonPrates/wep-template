@@ -1,4 +1,4 @@
-import TemplateMain from "ui/templates/main";
+import {TemplateMain} from "components";
 import Cards from "./Cards";
 import Head from "./Head";
 

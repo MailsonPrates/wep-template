@@ -1,8 +1,8 @@
 import {UserManagerApi, UserGroupApi} from "api";
-import App from "app";
-import Password from "ui/Password";
+import {normalizeString} from "helpers";
+import {Password} from "components";
 import React, { useEffect, useRef, useState } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Col, Row, Form, Button } from "react-bootstrap";
 import Firstname from "./Firstname";
 import Lastname from "./Lastname";
@@ -148,7 +148,7 @@ export default function UserForm(config={}){
         },
 
         onUsernameChange: e => {
-            let value = App.normalizeString(e.target.value);
+            let value = normalizeString(e.target.value);
             value = value.trim();
             value = value.split(" ").join(".");
             setUsername(value);

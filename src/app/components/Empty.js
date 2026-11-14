@@ -1,4 +1,3 @@
-import React from "react";
 import { HiOutlineArchiveBoxXMark } from "react-icons/hi2";
 
 /**

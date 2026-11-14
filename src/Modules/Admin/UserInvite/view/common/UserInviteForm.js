@@ -1,6 +1,6 @@
 import {UserInviteApi, UserGroupApi} from "api";
 import React, { useEffect, useRef, useState } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Form, Button } from "react-bootstrap";
 import Email from "./Email";
 import Group from "./Group";

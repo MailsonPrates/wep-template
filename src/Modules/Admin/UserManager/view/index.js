@@ -1,11 +1,9 @@
-import React from "react";
-import MainTemplate from "ui/templates/main";
+import {MainTemplate, Empty} from "components";
 import {UserManagerApi} from "api";
-import Empty from "ui/Empty";
-import App from "app";
+import {params} from "helpers";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
 
 export default function User(){
@@ -20,7 +18,7 @@ export default function User(){
     useEffect(() => {
 
         if ( hasSaveParam ){
-            App.params.remove("save");
+            params.remove("save");
             
             Toast({
                 state: "success",

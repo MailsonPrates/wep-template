@@ -10,7 +10,7 @@ const toString = Object.prototype.toString;
   class2type[`[object ${name}]`] = name.toLowerCase();
 });
 
-function type(obj) {
+function getType(obj) {
   if (obj == null) {
     return obj + ""; // "null" ou "undefined"
   }
@@ -21,4 +21,4 @@ function type(obj) {
     : typeof obj;
 }
 
-export default type; // ESM
+export default getType; // ESM

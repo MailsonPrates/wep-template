@@ -1,5 +1,4 @@
-import TemplateMain from "ui/templates/main";
-import React from "react";
+import {TemplateMain} from "components";
 import Cards from "./Cards";
 
 export default function Config(){

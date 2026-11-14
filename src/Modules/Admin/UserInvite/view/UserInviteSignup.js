@@ -1,16 +1,14 @@
 import {UserInviteApi} from "api";
-import App from "app";
-import Password from "ui/Password";
+import {normalizeString, $} from "helpers";
+import {Password, TemplateClean} from "components";
 import React, { useEffect, useState } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Col, Row, Form, Button } from "react-bootstrap";
 import Firstname from "./form/Firstname";
 import Lastname from "./form/Lastname";
 import Username from "./form/Username";
-import TemplateClean from "ui/templates/clean";
 import { HiOutlineExclamationTriangle } from "react-icons/hi2";
 import { useNavigate, useParams } from "react-router";
-import $ from "app/ref";
 
 export default function UserInviteSignup(){
     
@@ -98,7 +96,7 @@ export default function UserInviteSignup(){
 
             setValidated(false);
 
-            let value = App.normalizeString(e.target.value || "");
+            let value = normalizeString(e.target.value || "");
             value = value.trim();
             value = value.split(" ").join(".");
             

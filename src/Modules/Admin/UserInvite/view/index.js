@@ -1,7 +1,6 @@
-import MainTemplate from "ui/templates/main";
+import {MainTemplate, Empty} from "components";
 import {UserInviteApi} from "api";
-import Empty from "ui/Empty";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import React, { useEffect, useState } from "react";
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
 import { Link, useLocation } from "react-router";

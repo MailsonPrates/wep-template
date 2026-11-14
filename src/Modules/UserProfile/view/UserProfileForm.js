@@ -1,6 +1,6 @@
 import {UserProfileApi} from "api";
 import App from "app";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import React, { useEffect, useRef, useState } from "react";
 import Header from "./Header";
 import Firstname from "./Firstname";
@@ -8,10 +8,10 @@ import Lastname from "./Lastname";
 import Email from "./Email";
 import Nickname from "./Nickname";
 import Type from "./Type";
-import Password from "ui/Password";
+import {Password} from "components";
 import Username from "./Username";
 import { Button, Col, Row, Form } from "react-bootstrap";
-import $ from "app/ref";
+import {$} from "helpers";
 import SectionHeader from "./SectionHeader";
 
 let hasChangedImage = false;

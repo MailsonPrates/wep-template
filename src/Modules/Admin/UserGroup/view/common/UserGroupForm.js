@@ -4,7 +4,7 @@ import Name from "./Name";
 import BtnSave from "./BtnSave";
 import RoleGroup from "./RoleGroup";
 import {UserGroupApi} from "api";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";
 

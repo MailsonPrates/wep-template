@@ -1,4 +1,5 @@
 import App from "app";
+import {extendObj, getType} from "helpers";
 
 const DbMethods = ['get', 'create', 'delete', 'update'];
 
@@ -31,7 +32,7 @@ const fluent = {
 
         if ( !argsCount ) return state;
 
-        let firstArgType = App.type(args[0]);
+        let firstArgType = getType(args[0]);
 
         // .orderBy("nome")
         if ( haSingleArg && firstArgType == 'string' ){
@@ -117,7 +118,7 @@ const DB = {
         if ( !argsCount ) return Core.buildRequestProps(state, route);
 
         let firstArg = args[0];
-        let typeFirstArg = App.type(firstArg);
+        let typeFirstArg = getType(firstArg);
   
         // .get(["nome", "idade"])
         let isFieldsList = argsCount === 1 && typeFirstArg == 'array';
@@ -142,7 +143,7 @@ const DB = {
 
         //console.log({args});
 
-        if ( App.type(fields) !== "object" ) return {error: true, message: "Método create: os campos precisam ser um objeto"};
+        if ( getType(fields) !== "object" ) return {error: true, message: "Método create: os campos precisam ser um objeto"};
 
         state.query.fields = fields;
 
@@ -157,7 +158,7 @@ const DB = {
 
         let firstArg = args[0];
         let fields = {};
-        let isVerboseProps = App.type(firstArg) == "object";
+        let isVerboseProps = getType(firstArg) == "object";
 
         if ( argsCount === 2 ){
             fields[firstArg] = args[1];
@@ -192,7 +193,7 @@ const Core = {
     setCondition: (type, state, arg1, arg2, arg3) => {
 
         // .where({id})
-        if ( App.type(arg1) == "object" ){
+        if ( getType(arg1) == "object" ){
 
             Object.keys(arg1).forEach(key => {
                 let value = arg1[key];
@@ -256,7 +257,7 @@ const Core = {
 
         delete state.query.requestOptions;
 
-        let requestProps = App.extendObj(true, {
+        let requestProps = extendObj(true, {
             url: route.path,
             method: route.type || 'post',
             dataType: "json",
@@ -328,7 +329,7 @@ function apiFactory(routes, config = {}) {
         if (isRoute(routeGroup[prop])) {
           return function (...args) {
             // clona rota para não mutar original
-            const route = App.extendObj({}, routeGroup[prop]);
+            const route = extendObj({}, routeGroup[prop]);
 
             // vendor mode: normalmente ignoramos fluent e usamos request direto
             if (config.vendor) {
@@ -359,7 +360,7 @@ function apiFactory(routes, config = {}) {
 
             } else {
 
-              requestProps = App.extendObj(true, {
+              requestProps = extendObj(true, {
                   url: route.path,
                   method: route.type || 'post',
                   dataType: "json",

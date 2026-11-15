@@ -20,7 +20,12 @@ class CreatePathByRoleMap
 
                 if ( !$role || $route['vendor'] || !$route['view'] ) continue;
 
-                $map[$role] = ['title' => $route['module_title'], 'path' => $path];
+                $map[$role] = [
+                    'title' => $route['module_title'],
+                    'path' => $path,
+                    // a página passa pelo CheckPermission? (o front usa para mostrar "Acesso negado")
+                    'check' => in_array('checkPermission', (array) ($route['middlewares'] ?? []), true),
+                ];
             }
         }
 

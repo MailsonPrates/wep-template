@@ -1,7 +1,7 @@
 import { Container, Dropdown, Navbar } from "react-bootstrap";
 import { Link } from "react-router";
 import { HiBars3, HiOutlineUser, HiOutlineArrowRightOnRectangle } from "react-icons/hi2";
-import { user, homePath } from "core/user";
+import { can, user, homePath } from "core/user";
 import Avatar from "components/Avatar";
 import Logo from "components/Logo";
 
@@ -27,10 +27,12 @@ export default function Nav({ onMenuClick }) {
                         <Avatar image={current.profile_images && current.profile_images.small} name={name} />
                     </Dropdown.Toggle>
                     <Dropdown.Menu className="shadow border-light">
-                        <Dropdown.Item as={Link} to="/user/profile/" className="text-secondary">
-                            <HiOutlineUser className="fs-4" />
-                            <span className="ms-2">Meus dados</span>
-                        </Dropdown.Item>
+                        {can("page.user.profile") && (
+                            <Dropdown.Item as={Link} to="/user/profile/" className="text-secondary">
+                                <HiOutlineUser className="fs-4" />
+                                <span className="ms-2">Meus dados</span>
+                            </Dropdown.Item>
+                        )}
                         {/* logout é uma rota do servidor (encerra a sessão): navegação completa */}
                         <Dropdown.Item href="/login/logout/" className="text-secondary">
                             <HiOutlineArrowRightOnRectangle className="fs-4" />

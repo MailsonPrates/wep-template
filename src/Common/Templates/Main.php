@@ -34,6 +34,8 @@ class Main implements iTemplate
                 ['script', ['html' => 'window.App = ' . Html::json([
                     'user' => User::getData(),
                     'visual' => ['logo' => self::logo()],
+                    // página aberta sem permissão (CheckPermission): o front mostra "Acesso negado"
+                    'forbidden' => (bool) ($route->forbidden ?? false),
                 ])]],
                 ...self::viewAssets()
             ]

@@ -1,0 +1,17 @@
+# Normaliza quebras de linha (LF no repositório e no disco)
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Fora do pacote baixado pelo composer create-project
+/tests export-ignore

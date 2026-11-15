@@ -189,10 +189,37 @@ class UserInviteApi
         return $response->json(UserInviteService::create($payload['fields']));
     }
 
+    /**
+     * O único update permitido é cancelar um convite pendente.
+     */
+    public function update($request, $response)
+    {
+        try {
+            $payload = UserInvite::clientPayload('update');
+        } catch (InvalidPayloadException $e) {
+            return $response->json(Response::error($e->getMessage()));
+        }
+
+        if ( ($payload['fields'] ?? []) !== ['status' => 'cancelled'] ){
+            return $response->json(Response::error('Só é possível cancelar o convite'));
+        }
+
+        $invite = UserInvite::find($payload['id']);
+
+        if ( $invite->error || empty($invite->data) ) return $response->json(Response::error('Convite não encontrado'));
+
+        if ( ($invite->data['status'] ?? '') !== 'pending' ) return $response->json(Response::error('Só convites pendentes podem ser cancelados'));
+
+        return $response->json(UserInvite::updateById($payload['id'], ['status' => 'cancelled']));
+    }
+
     public function resend($request, $response)
     {
-        $data = $request->data();
-        return $response->json(UserInviteService::resend($data));
+        $id = (int) ($request->user_invite_id ?? 0);
+
+        if ( $id <= 0 ) return $response->json(Response::error('Convite não encontrado'));
+
+        return $response->json(UserInviteService::resend(['user_invite_id' => $id]));
     }
 
 }

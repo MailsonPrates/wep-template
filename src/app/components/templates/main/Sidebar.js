@@ -1,50 +1,42 @@
-import App from "app";
-
+import { Offcanvas } from "react-bootstrap";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi2";
+import { user } from "core/user";
+import Menu, { mainMenuItems } from "./Menu";
 import { useSidebar } from "./SidebarContext";
-import { motion } from "motion/react";
-import Menu from "./menu";
-import SidebarToggleBtn from "./SidebarToggleBtn";
 
-export default function Sidebar(){
-
-    const user = App.config("user") || {};
-    const menu = (user.menu.filter(item => item.slug === "principal") || [])[0] || {};
-    const menuList = menu.child || [];
-    const { openMenus, isSidebarOpen, toggleMenu, toggleSidebar } = useSidebar();
-
-    const Core = {
-        onToggleSidebarBtnClick: () => {
-            toggleSidebar();
-        },
-
-        onMenuItemClick: (props, e) => {
-
-            const isTypeGroup = props.type === "group"; 
-
-            if ( !isSidebarOpen && isTypeGroup ) toggleSidebar();
-
-            let id = `${props.parent_id}:${props.id}`;
-            toggleMenu(id, props.isMain);
-        }
-    }
+/** Sidebar do desktop: aberta (250px) ou recolhida só com os ícones (64px). */
+export function Sidebar() {
+    const { isOpen, toggleSidebar } = useSidebar();
 
     return (
-        <div className={`sidebar d-none d-md-block col-sm-2 p-0${isSidebarOpen ? ' sidebar-open' : ''}`}>
-            <motion.div
-                className="sidebar-content bg-white position-relative border-end h-100"
-                initial={{ width: isSidebarOpen ? 250 : 64 }}
-                animate={{ width: isSidebarOpen ? 250 : 64 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}>
+        <aside className={`sidebar d-none d-md-block col-auto p-0${isOpen ? " sidebar-open" : ""}`}>
+            <div className="sidebar-content bg-white position-relative border-end h-100">
                 <div className="sticky-top">
-                    <SidebarToggleBtn isSidebarOpen={isSidebarOpen} onToggleSidebarBtnClick={Core.onToggleSidebarBtnClick} />
-                    <Menu
-                        menuList={menuList} 
-                        onToggle={Core.onMenuItemClick} 
-                        isSidebarOpen={isSidebarOpen} 
-                        openMenus={openMenus.map(id => parseFloat(id.split(":")[1]))} 
-                    />
+                    <button
+                        type="button"
+                        className="sidebar-toggle"
+                        onClick={() => toggleSidebar()}
+                        aria-label={isOpen ? "Recolher menu" : "Expandir menu"}
+                    >
+                        {isOpen ? <HiChevronLeft /> : <HiChevronRight />}
+                    </button>
+                    <Menu items={mainMenuItems(user())} collapsed={!isOpen} onExpand={() => toggleSidebar(true)} />
                 </div>
-            </motion.div>
-        </div>
-    )
+            </div>
+        </aside>
+    );
+}
+
+/** Menu do celular: painel lateral que fecha ao navegar. */
+export function SidebarMobile({ show, onClose }) {
+    return (
+        <Offcanvas show={show} onHide={onClose} className="w-75 d-md-none">
+            <Offcanvas.Header closeButton>
+                <Offcanvas.Title>Menu</Offcanvas.Title>
+            </Offcanvas.Header>
+            <Offcanvas.Body className="px-0">
+                <Menu items={mainMenuItems(user())} onNavigate={onClose} />
+            </Offcanvas.Body>
+        </Offcanvas>
+    );
 }

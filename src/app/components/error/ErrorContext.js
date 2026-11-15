@@ -2,7 +2,7 @@ import Error403 from "./Error403";
 import Error404 from "./Error404";
 import ErrorPage from "./ErrorPage";
 
-import React, { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { useLocation } from "react-router";
 import { registerSetError } from "./errorManager";
 
@@ -34,9 +34,8 @@ export function useError() {
   return useContext(ErrorContext);
 }
 
-// Um exemplo de página de erro
 function ErrorPageComponent({ status }) {
   if (status === 403) return <Error403 />;
   if (status === 404) return <Error404 />;
-  return <ErrorPage code="***" description="Erro desconhecido!" goBackBtn={true} />;
+  return <ErrorPage code={status || "Erro"} description="Erro desconhecido!" />;
 }

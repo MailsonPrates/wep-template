@@ -61,6 +61,9 @@ class UserService
     /** Validade do link de recuperação de senha. */
     public const RECOVERY_TTL = 3600;
 
+    /** Status que o admin pode definir na edição. */
+    public const STATUSES = ['ativado', 'desativado', 'mudar_senha'];
+
     /**
      * Cria ou atualiza um usuário pelo admin.
      *
@@ -73,9 +76,13 @@ class UserService
         try {
 
             $user_id = $data['user_id'] ?? "";
-            $is_no_email_flux = $data['no_email'] ?? false;
+            $is_no_email_flux = filter_var($data['no_email'] ?? false, FILTER_VALIDATE_BOOLEAN);
             $password = $data['password'] ?? "";
-            $status = 'ativado';
+
+            // edição: o status escolhido no formulário (antes era sempre "ativado": não dava para
+            // desativar um usuário, e editar um usuário com senha temporária liberava o acesso)
+            $requested_status = (string) ($data['status'] ?? '');
+            $status = $user_id && in_array($requested_status, self::STATUSES, true) ? $requested_status : 'ativado';
             $nickname = $data['nickname'] ?? "";
             $code = null;
 
@@ -84,6 +91,15 @@ class UserService
                 $password = Token::password();
                 $status  = 'mudar_senha';
                 $code = Token::seal(Token::generate(), self::TEMP_PASSWORD_TTL);
+            }
+
+            // create com e-mail: senha aleatória que ninguém conhece; o usuário define a dele pelo
+            // link enviado por e-mail. (Antes o formulário não tinha senha e o cadastro sempre falhava
+            // com "A senha precisa ter pelo menos 8 caracteres".)
+            $send_recovery = !$user_id && !$is_no_email_flux;
+
+            if ( $send_recovery && $password === '' ){
+                $password = Token::password() . Token::password();
             }
 
             $fields = [
@@ -103,7 +119,19 @@ class UserService
 
             $save = SaveUser::handle($fields);
 
-            if ( $save->error || !$code ) return $save;
+            if ( $save->error ) return $save;
+
+            if ( $send_recovery ){
+                $sent = self::resetPassword(['user_id' => $save->last_id]);
+
+                return Response::success([], [
+                    "message" => $sent->error
+                        ? "Usuário criado, mas o e-mail para definir a senha não foi enviado: " . ($sent->message ?? '') . ". Use \"Resetar senha\" para tentar de novo."
+                        : "Usuário criado. Enviamos um e-mail para ele definir a senha."
+                ]);
+            }
+
+            if ( !$code ) return $save;
 
             return Response::success([], [
                 "message" => "Senha temporária (válida por 72h, mostrada só agora): " . $password

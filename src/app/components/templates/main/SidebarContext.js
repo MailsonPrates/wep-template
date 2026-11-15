@@ -1,65 +1,58 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
-const SidebarContext = createContext();
+const SidebarContext = createContext(null);
+const STORAGE_KEY = "sidebar_open";
 
-export const SidebarProvider = ({ children }) => {
-
-    const [openMenus, setOpenMenus] = useState([]);
-    const [open, setOpen] = useState(true);
-    const [openMain, setOpenMain] = useState(null);
-
-    useEffect(() => {
-        const bools = {"true": true, "false": false};
-        const storage = localStorage.getItem("sidebar_open");
-        const initialSidebarOpen = bools[storage];
-        setOpen(initialSidebarOpen);
-    }, [])
-
-    const toggleMenu = (id, isMain=false) => {
-
-        let isIdSameMainOpened = id === openMain;
-
-        setOpenMenus((prev) => {
-            
-            let prevCopy = JSON.parse(JSON.stringify(prev));
-
-            if ( isMain ){
-
-                if ( isIdSameMainOpened ) return [];
-
-                prevCopy = [];
-            }
-            
-            // Remove ele mesmo quando for o caso
-            if ( prevCopy.includes(id) ){
-                return prevCopy.filter(item => item !== id);
-            }
-
-            // Remove outros com mesmo parent (só pode ter aberto um item por parent)
-            let parent = id.split(":")[0] + ":";
-            prevCopy = prevCopy.filter(item => !item.includes(parent));
-
-            // Adiciona
-            return [...prevCopy, id];
-        });
-
-        if ( isMain ){
-            setOpenMain(isIdSameMainOpened ? null : id);
-        }
-
+function readOpen() {
+    try {
+        // primeira visita (nada salvo): aberta. Antes o valor ausente virava `undefined` e a sidebar
+        // começava fechada.
+        return window.localStorage.getItem(STORAGE_KEY) !== "false";
+    } catch (e) {
+        return true;
     }
+}
 
-    const toggleSidebar = () => {
-        let value = !open;
-        setOpen(value);
-        localStorage.setItem("sidebar_open", value);
-    };
+/**
+ * Estado da sidebar: aberta/recolhida (lembrado no navegador) e quais grupos do menu estão
+ * expandidos. Só um grupo fica aberto por nível: abrir um fecha os irmãos.
+ */
+export function SidebarProvider({ children }) {
+    const [isOpen, setIsOpen] = useState(readOpen);
+    const [openGroups, setOpenGroups] = useState([]);
 
-    return (
-        <SidebarContext.Provider value={{ openMenus, isSidebarOpen: open, toggleMenu, toggleSidebar }}>
-            {children}
-        </SidebarContext.Provider>
+    const toggleSidebar = useCallback((value) => {
+        setIsOpen((prev) => {
+            const next = typeof value === "boolean" ? value : !prev;
+            try { window.localStorage.setItem(STORAGE_KEY, String(next)); } catch (e) { /* sem storage */ }
+            return next;
+        });
+    }, []);
+
+    /**
+     * @param {{id: number}} item  grupo clicado
+     * @param {number[]} siblingIds ids dos itens do mesmo nível (fechados ao abrir este)
+     * @param {boolean} [force]     true = só abrir (ex.: grupo da página atual)
+     */
+    const toggleGroup = useCallback((item, siblingIds = [], force) => {
+        setOpenGroups((prev) => {
+            const isOpenNow = prev.includes(item.id);
+
+            if (isOpenNow && force !== true) return prev.filter((id) => id !== item.id);
+            if (isOpenNow) return prev;
+
+            return [...prev.filter((id) => !siblingIds.includes(id)), item.id];
+        });
+    }, []);
+
+    const value = useMemo(
+        () => ({ isOpen, toggleSidebar, openGroups, toggleGroup }),
+        [isOpen, toggleSidebar, openGroups, toggleGroup]
     );
-};
 
-export const useSidebar = () => useContext(SidebarContext);
+    return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
+}
+
+export function useSidebar() {
+    return useContext(SidebarContext);
+}

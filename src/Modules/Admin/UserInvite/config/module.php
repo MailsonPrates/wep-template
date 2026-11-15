@@ -16,6 +16,9 @@ return [
     'api' => [
         'primary_key' => 'user_invite_id',
         'order_by' => ['user_invite_id', 'DESC'],
+        // o cliente só escolhe e-mail e grupo (create) e cancela (update de status, ver UserInviteApi);
+        // token, validade e uso são definidos no servidor
+        'fillable' => ['email', 'user_group_id', 'status'],
     ],
     'middlewares' => [],
     'constants' => [],
@@ -32,6 +35,11 @@ return [
             [
                 'path' => '/create',
                 'view' => 'UserInviteCreate',
+            ],
+            [
+                'path' => '/resend',
+                'method' => 'resend',
+                'label' => 'reenviar convite'
             ],
             /**
              * Cadastro do convidado: público (quem recebe o convite ainda não tem conta).

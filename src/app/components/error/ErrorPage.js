@@ -1,49 +1,21 @@
-import { Button } from "react-bootstrap";
+import { Link } from "react-router";
+import { homePath } from "core/user";
 
-export default function ErrorPage(props={}){
-
-    const styles = {
-        main: {
-            padding: 20,
-        },
-        code: {
-            fontWeight: "bolt",
-            fontSize: "6rem"
-        },
-        description: {
-            color: '#bdbdbd',
-            fontSize: 45,
-            fontWeight: 500,
-            maxWidth: 260,
-            lineHeight: "40px",
-            textAlign: "left",
-            margin: "0 0 0 15px"
-        }
-    }
-
-    return <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-        }}>
-        <div style={styles.main}>
-            <div style={{
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-            }}>
-                <div style={styles.code}>{props.code}</div>
-                <div style={styles.description}>{props.description}</div>
-            </div>
-            <div className="text-center">
-                {props.goBackBtn ? <Button variant="primary" size="lg" className="w-50" onClick={() => window.location.href = "/"}>voltar</Button> : ""}
+/** Página de erro (403, 404...) com botão de voltar para a página inicial do usuário. */
+export default function ErrorPage({ code, description, backButton = true }) {
+    return (
+        <div className="error-page">
+            <div>
+                <div className="d-flex align-items-center justify-content-center">
+                    <div className="error-page-code">{code}</div>
+                    <div className="error-page-description">{description}</div>
+                </div>
+                {backButton && (
+                    <div className="text-center mt-4">
+                        <Link to={homePath()} className="btn btn-primary btn-lg w-50">voltar</Link>
+                    </div>
+                )}
             </div>
         </div>
-    </div>
+    );
 }

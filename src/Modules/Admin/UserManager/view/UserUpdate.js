@@ -1,29 +1,14 @@
-import {TemplateMain} from "components";
-import UserForm from "./common/UserForm";
-import { Link } from "react-router";
-import { HiChevronLeft } from "react-icons/hi2";
-import { useNavigate, useParams  } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { TemplateMain } from "components";
+import UserForm from "./UserForm";
 
-export default function UserUpdate(){
-
+export default function UserUpdate() {
     const navigate = useNavigate();
     const { id } = useParams();
 
-    const Header = () => {
-        return (
-            <div className="text-end">
-                <Link to="/admin/user/" className="text-reset text-decoration-none d-flex align-items-center justify-content-end">
-                    <HiChevronLeft className="fs-6" />
-                    <span className="ms-1">voltar</span>
-                </Link>
-            </div>
-        )
-    }
-
     return (
-        <TemplateMain title="Editar usuário" breadcrumbs={['page.admin', 'page.admin.user']}>
-            <Header />
-            <UserForm afterSave={() => navigate("/admin/user/")} id={id} />
+        <TemplateMain title="Editar usuário" breadcrumbs={["page.admin", "page.admin.user"]}>
+            <UserForm id={id} onSaved={() => navigate("/admin/user/")} />
         </TemplateMain>
-    )
+    );
 }

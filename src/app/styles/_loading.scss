@@ -1,0 +1,62 @@
+// .full-loading: cobre o bloco com um véu e um spinner (estado "carregando" de telas e formulários).
+// .loading: spinner pequeno inline.
+
+.full-loading,
+.loading {
+    position: relative;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+        content: "";
+        z-index: 999;
+    }
+
+    &::before {
+        position: absolute;
+        inset: 0;
+        background: rgba($white, .66);
+    }
+
+    &::after {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        width: 30px;
+        height: 30px;
+        margin: -15px auto 0;
+        border: 2px solid var(--app-loading-color);
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: app-spin .6s infinite linear;
+    }
+}
+
+.loading {
+    display: inline-block;
+    vertical-align: middle;
+
+    &::before,
+    &::after { position: inherit; }
+
+    &::after {
+        width: 20px;
+        height: 20px;
+        margin-top: 0;
+    }
+}
+
+.spin { animation: app-spin 2s infinite linear; }
+.pulse { animation: app-pulse 1s infinite; }
+
+@keyframes app-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(359deg); }
+}
+
+@keyframes app-pulse {
+    0% { opacity: 1; }
+    70% { opacity: .2; }
+    to { opacity: .5; }
+}

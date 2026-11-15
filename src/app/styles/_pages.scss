@@ -1,0 +1,60 @@
+// Telas de autenticação (login, recuperação, nova senha, cadastro por convite)
+.auth-page {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $light;
+    padding: 0 .5rem;
+    overflow-y: auto;
+
+    &-box {
+        width: 100%;
+        max-width: 400px;
+        margin: 2rem auto;
+        text-align: center;
+    }
+
+    .brand-logo { margin: 0 auto; }
+}
+
+// Perfil do usuário: capa sobre a foto ao passar o mouse
+.profile-image-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: $gray-200 center / cover no-repeat;
+}
+
+.profile-image-cover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($black, .45);
+    color: $white;
+    opacity: 0;
+    transition: opacity .3s ease-out;
+    cursor: pointer;
+}
+
+.profile-image-container:hover .profile-image-cover,
+.profile-image-container:focus-within .profile-image-cover { opacity: 1; }
+
+// Grupos de permissões (Admin > Grupo de usuários)
+.roles-module + .roles-module { margin-top: 1rem; }
+
+// Lista ordenável de menus (Config > Menu)
+.sortable-ghost { opacity: .4; }
+.sortable-handle { cursor: grab; }
+
+// Pré-visualização do tema (Config > Visual)
+.visual-preview {
+    border: 1px solid $border-color;
+    border-radius: $border-radius-lg;
+    overflow: hidden;
+}

@@ -1,0 +1,16 @@
+// Entrada única de estilos: o webpack compila para public/assets/css/main.css.
+// Bootstrap vem do npm (mesma versão do react-bootstrap).
+
+@import "variables";
+@import "bootstrap/scss/bootstrap";
+@import "nprogress/nprogress"; // CSS base da barra de progresso (o .bar é customizado no _base)
+
+@import "theme";
+@import "base";
+@import "utilities";
+@import "loading";
+@import "forms";
+@import "nav";
+@import "sidebar";
+@import "menu";
+@import "pages";

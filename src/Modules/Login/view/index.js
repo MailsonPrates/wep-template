@@ -1,110 +1,67 @@
-import LoginForm from "./LoginForm";
-import {LoginApi} from "api";
-import { useState, useEffect } from "react";
-import {useReqToast} from 'hooks';
 import { Link, useSearchParams } from "react-router";
-import RecoveryMessage from "./recovery/RecoveryMessage";
-import App from "app";
+import { Alert, Button, Form } from "react-bootstrap";
+import { GoCheckCircle } from "react-icons/go";
+import { LoginApi } from "api";
+import { AuthPage, Field, Password } from "components";
+import { useAction, useForm } from "hooks";
 
-export default function Login(props){
- 
-    const showToast = useReqToast();
-    let [searchParams] = useSearchParams();
-    const hasRecoveryMessage = searchParams.get("recover");
-    const email = searchParams.get("email") || "";
+/**
+ * Login. Depois de entrar, o servidor manda para a página que o usuário tentou abrir ou para a
+ * página inicial do grupo dele (o redirect da resposta é seguido pelo request.js).
+ */
+export default function Login() {
+    const [searchParams] = useSearchParams();
+    const passwordChanged = searchParams.get("recover");
 
-    const [status, setStatus] = useState("ready");
-    const [password, setPassword] = useState("");
-    // desmarcado por padrão, como a caixa aparece na tela (antes era true sem o usuário marcar)
-    const [keep, setKeep] = useState(false);
-    const [user, setUser] = useState(email);
-    const [validated, setValidated] = useState(false);
-
-    useEffect(() => {
-        document.title = `Login | ${App.config("title", "Wep")}`
-    }, [props.title]);
-
-
-    const Core = {
-
-        set: {
-            keep: setKeep,
-            user: setUser,
-            password: setPassword
-        },
-
-        onInputChange: (e) => {
-            const $input = e.target;
-            const name = $input.name;
-            // checkbox: o valor é "checked" (antes mandava sempre "on", mesmo desmarcado)
-            const value = $input.type === "checkbox" ? $input.checked : $input.value;
-
-            Core.set[name](value);
-        },
-
-        handleSubmit: e => {
-            const form = e.currentTarget;
-
-            if (form.checkValidity() === false) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-
-            if ( !user || !password ){
-                setValidated(true);
-                return;
-            }
-        
-            setStatus('processing');
-            
-            Core.handleLogin({user, password, keep});
-        },
-
-        handleLogin: async (props) => {
-
-            let login = await LoginApi.login({
-                username: props.user,
-                password: props.password,
-                keep: props.keep
-            });
-
-            if ( login.error ) {
-
-                showToast({
-                    state: "error",
-                    message: login.message
-                })
-                 
-                setStatus("ready")
-
-                return;
-            }
+    const form = useForm(
+        { username: searchParams.get("email") || "", password: "", keep: false },
+        {
+            username: { required: "Informe o usuário" },
+            password: { required: "Informe a senha" },
         }
-    }
+    );
+
+    const [login, { loading }] = useAction((values) => LoginApi.login(values));
+
+    const onSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!form.validate()) return;
+
+        const res = await login(form.values);
+
+        if (res && res.error) form.set("password", "");
+    };
 
     return (
-        <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center bg-light">
-            <div className={`w-100${status === "processing" ? ' full-loading' : ''}`}>
-                <div className="mx-auto text-center" style={{maxWidth: 400}}>
-                    <Link to="/">
-                        <img src="/assets/images/logo.png" alt="Logo" style={{maxWidth: 140}} />
-                    </Link>
-                    <div className="my-4 text-center">
-                        <h1 className="mb-0 h2">Acesse sua conta</h1>
-                    </div>
-                    {hasRecoveryMessage && <RecoveryMessage />}
-                    <LoginForm
-                        status={status}
-                        user={user}
-                        password={password}
-                        keep={keep}
-                        onInputChange={Core.onInputChange}
-                        handleSubmit={Core.handleSubmit}
-                        validated={validated}
-                        />
-                </div>
-            </div>
-        </div>
+        <AuthPage documentTitle="Login" title="Acesse sua conta" loading={loading}>
+            {passwordChanged && (
+                <Alert variant="success" className="d-flex align-items-center py-2">
+                    <GoCheckCircle className="fs-4 flex-shrink-0" />
+                    <span className="ms-2">Senha alterada com sucesso</span>
+                </Alert>
+            )}
+            <Form noValidate onSubmit={onSubmit}>
+                <Field label="Usuário" autoComplete="username" autoFocus {...form.field("username")} />
+                <Password {...form.field("password")} />
+                <Link to="/login/recovery/">Esqueceu a senha?</Link>
+                <Button
+                    type="submit"
+                    size="lg"
+                    className="gradient-primary border-0 fw-medium rounded-5 w-100 mt-4"
+                    style={{ padding: 13 }}
+                    disabled={loading}
+                >
+                    {loading ? "Entrando..." : "Entrar"}
+                </Button>
+                <Form.Check
+                    type="checkbox"
+                    id="login-keep"
+                    className="mt-3 d-flex justify-content-center gap-2"
+                    label="Mantenha conectado"
+                    {...form.field("keep", { checkbox: true })}
+                />
+            </Form>
+        </AuthPage>
     );
 }

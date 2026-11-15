@@ -1,30 +1,39 @@
+import { Suspense } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router";
 import RouteMaps from "route-maps";
-import React, { Suspense} from 'react';
-import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route} from "react-router";
-import { ToastProvider, SidebarProvider, ErrorProvider } from 'contexts';
-import App from "app";
-import {ProgressBar, Error404} from "components";
+import { ToastProvider, SidebarProvider, ErrorProvider } from "contexts";
+import config from "core/config";
+import { ProgressBar, Error404 } from "components";
 
-document.addEventListener('DOMContentLoaded', function(event) {
-    const root = createRoot(document.getElementById('app'));
-    const basename = `/${App.config("basename", "")}`;
-    
-    root.render(
+function mount() {
+    const element = document.getElementById("app");
+
+    if (!element) return;
+
+    const basename = `/${String(config("basename", "") || "").replace(/^\/+|\/+$/g, "")}`;
+
+    createRoot(element).render(
         <ToastProvider>
             <SidebarProvider>
                 <BrowserRouter basename={basename}>
-                    <ProgressBar />
-                    <Suspense>
-                        <ErrorProvider>
+                    <ErrorProvider>
+                        <Suspense fallback={<ProgressBar />}>
                             <Routes>
                                 {RouteMaps()}
                                 <Route path="*" element={<Error404 />} />
                             </Routes>
-                        </ErrorProvider>
-                    </Suspense>
+                        </Suspense>
+                    </ErrorProvider>
                 </BrowserRouter>
             </SidebarProvider>
         </ToastProvider>
     );
-});
+}
+
+// os scripts usam `defer`, mas monta também se o DOM já estiver pronto
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mount);
+} else {
+    mount();
+}

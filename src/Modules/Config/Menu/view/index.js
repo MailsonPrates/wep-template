@@ -31,7 +31,7 @@ export default function Menu(){
 
             setStatus("processing");
 
-            let remove = await MenuApi.where("id", props.id).delete();
+            let remove = await MenuApi.delete(props.id);
 
             console.log({remove});
 
@@ -68,9 +68,7 @@ export default function Menu(){
 
             setStatus("processing")
 
-            let remove = await MenuApi.deleteItem({
-                id: props.id
-            });
+            let remove = await MenuApi.deleteItem(props.id);
 
             setStatus("ready")
 

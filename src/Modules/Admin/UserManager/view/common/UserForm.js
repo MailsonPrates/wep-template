@@ -58,9 +58,7 @@ export default function UserForm(config={}){
                 return;
             }
 
-            let getUser = await UserManagerApi.get({
-                user_id: config.id
-            });
+            let getUser = await UserManagerApi.get(config.id);
 
             console.log({getUser});
 

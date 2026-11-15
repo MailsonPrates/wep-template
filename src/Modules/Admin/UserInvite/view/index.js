@@ -31,7 +31,7 @@ export default function UserInvite(){
 
             setStatus("processing");
 
-            UserInviteApi.delete("user_invite_id", id)
+            UserInviteApi.delete(id)
                 .then(response => {
 
                     setStatus("ready");
@@ -55,8 +55,7 @@ export default function UserInvite(){
             setStatus("processing");
 
             let update = await UserInviteApi
-                .where("user_invite_id", id)
-                .update("status", "cancelled");
+                .update(id, {status: "cancelled"});
             
             setStatus("ready");
 

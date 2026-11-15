@@ -23,8 +23,7 @@ class UserGroupApi
 
     public function create($request, $response)
     {
-        $data = $request->data();
-        $create = UserGroup::create($data);
+        $create = UserGroup::fromClient('create');
 
         if ( !$create->error ){
             MenuService::buildMenusCache();
@@ -36,8 +35,7 @@ class UserGroupApi
 
     public function update($request, $response)
     {
-        $data = $request->data();
-        $update = UserGroup::update($data);
+        $update = UserGroup::fromClient('update');
 
         if ( !$update->error ){
             MenuService::buildMenusCache();
@@ -50,8 +48,7 @@ class UserGroupApi
 
     public function delete($request, $response)
     {
-        $data = $request->data();
-        $delete = UserGroup::delete($data);
+        $delete = UserGroup::fromClient('delete');
 
         if ( !$delete->error ){
             MenuService::buildMenusCache();

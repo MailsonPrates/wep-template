@@ -9,49 +9,43 @@ use App\Core\File;
 class MenuItemService
 {
     
-    public static function create($props=[])
+    /**
+     * @param array $fields colunas do item (já validadas)
+     */
+    public static function create(array $fields)
     {
         $table = DB::table('menu_items');
-        $create = $table->create($props);
-        $created_id = DB::$pdo->lastInsertId();
+        $create = $table->create(['fields' => $fields]);
+
+        if ( $create->error ) return $create;
+
+        $created_id = $create->last_id ?? DB::$pdo->lastInsertId();
 
         // Adiciona icone
-        $fields = $props['fields'] ?? [];
-        $icon = $fields['icon'] ?? '{}';
-        $icon = json_decode($icon, true);
+        $icon = json_decode($fields['icon'] ?? '{}', true);
         $icons = Cache::get("menu_icons") ?: [];
         $icons[$created_id] = $icon;
 
         Cache::set('menu_icons', $icons, false);
         self::buildMenuIconsFrontFile($icons);
-        
+
         MenuService::buildMenusCache();
 
         return $create;
     }
 
-    public static function delete($props=[])
+    public static function delete($id)
     {
         $table = DB::table('menu_items');
-        
-        $wheres = $props['where'] ?? [];
-        $id = 0;
 
-        foreach($wheres as $item){
-
-            if ( $item[0] != "id" ) continue;
-
-            $id = $item[2];
-
-            break;
-        }
-
-        // Remove childs (se ouver)
+        // Remove childs (se houver)
         $deleteChilds = $table->where('parent_id', '=', $id)->delete();
 
         if ( $deleteChilds->error ) return $deleteChilds;
 
-        $delete = $table->delete($props);
+        $delete = $table->where('id', '=', $id)->delete();
+
+        if ( $delete->error ) return $delete;
 
         // Remove icone
         $icons = Cache::get("menu_icons") ?: [];
@@ -65,33 +59,21 @@ class MenuItemService
         return $delete;
     }
 
-    public static function update($props=[])
+    public static function update($id, array $fields)
     {
         $table = DB::table('menu_items');
-        $update = $table->update($props);
+        $update = $table->where('id', '=', $id)->update($fields);
 
-        $wheres = $props['where'] ?? [];
-        $id = 0;
+        if ( $update->error ) return $update;
 
-        foreach($wheres as $item){
+        // Atualiza icone (só quando enviado)
+        if ( array_key_exists('icon', $fields) ){
+            $icons = Cache::get("menu_icons") ?: [];
+            $icons[$id] = json_decode($fields['icon'] ?? '{}', true);
 
-            if ( $item[0] != "id" ) continue;
-
-            $id = $item[2];
-
-            break;
+            Cache::set('menu_icons', $icons, false);
+            self::buildMenuIconsFrontFile($icons);
         }
-
-        // Atualiza icone
-        $fields = $props['fields'] ?? [];
-        $icon = $fields['icon'] ?? '{}';
-        $icon = json_decode($icon, true);
-
-        $icons = Cache::get("menu_icons") ?: [];
-        $icons[$id] = $icon;
-
-        Cache::set('menu_icons', $icons, false);
-        self::buildMenuIconsFrontFile($icons);
 
         MenuService::buildMenusCache();
 

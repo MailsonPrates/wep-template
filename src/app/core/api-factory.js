@@ -1,417 +1,168 @@
 import App from "app";
-import {extendObj, getType} from "helpers";
+import {getType} from "helpers";
 
-const DbMethods = ['get', 'create', 'delete', 'update'];
+/**
+ * Api factory: transforma o mapa de rotas de um módulo (gerado pelo `php app update`)
+ * em funções de chamada.
+ *
+ * O front NÃO monta queries. Os métodos de banco seguem o contrato do CRUD automático:
+ *
+ *   UserGroupApi.get()                          lista (ordem e limite definidos no servidor)
+ *   UserGroupApi.get(id)                        um registro pela chave primária
+ *   UserGroupApi.get({status: "on", page: 2})   filtros declarados no módulo ('api' => ['filters' => [...]])
+ *   UserGroupApi.create({name})
+ *   UserGroupApi.update(id, {name})
+ *   UserGroupApi.delete(id)
+ *
+ * Métodos customizados recebem o payload como está:  LoginApi.login({username, password})
+ *
+ * Opções da requisição (FormData, headers...):  UserProfileApi.requestOptions({data: fd}).salvar()
+ */
 
-const fluent = {
-    where() {
-        let args = Core.getArgs(arguments);
-        args.unshift('where');
-        return Core.setCondition.apply(null, args);
-    },
+const DB_METHODS = ['get', 'create', 'update', 'delete'];
 
-    or(){
-        let args = Core.getArgs(arguments);
-        args.unshift('or');
-        return Core.setCondition.apply(null, args); 
-    },
+/** Métodos do construtor de queries antigo: removidos (a query é definida no servidor). */
+const REMOVED = ['where', 'or', 'andOr', 'orderBy', 'limit', 'page', 'fields', 'debug'];
 
-    andOr(){
-        let args = Core.getArgs(arguments);
-        args.unshift('andOr');
-        return Core.setCondition.apply(null, args); 
-    },
+const isScalar = (value) => ['string', 'number'].includes(getType(value)) && value !== '';
 
-    orderBy(state){
-        let args = Core.getArgs(arguments);
-
-        args.shift();
-
-        let argsCount = args.length;
-        let haSingleArg = argsCount === 1;
-
-        if ( !argsCount ) return state;
-
-        let firstArgType = getType(args[0]);
-
-        // .orderBy("nome")
-        if ( haSingleArg && firstArgType == 'string' ){
-            state.query.orderBy = [args[0]];
-            return state;
-        }
-
-        if ( firstArgType == 'array' ){
-            args = args[0];
-            argsCount = args.length;
-        }
-
-        let lastArg = args[argsCount - 1];
-        let lastIsSort = typeof lastArg == 'string' && ['desc', 'asc'].includes(lastArg.toLowerCase());
-        
-        let argsList = args;
-
-        if ( lastIsSort ){
-
-            // orderBy("nome", "...", "desc")
-            argsList = argsList.slice(0, argsCount - 1);
-
-            state.query.orderBy = [argsList, lastArg];
-
-            return state;
-        }
-
-        state.query.orderBy = argsList;
-
-        return state;
-    },
-
-    limit(state){
-        let args = Core.getArgs(arguments);
-
-        args.shift();
-
-        let argsCount = args.length;
-        let haSingleArg = argsCount === 1;
-
-        if ( !argsCount ) return state;
-
-        let isSingleList = Array.isArray(args[0]);
-
-        if ( haSingleArg ){
-            state.query.limit = isSingleList 
-            ? args[0] 
-            : [args[0]];
-            return state;
-        }
-
-        if ( argsCount === 2 ){
-            state.query.limit = args;
-        }
-
-        return state;
-    },
-
-    page(state, page=1){
-        state.query.page = page;
-        return state;
-    },
-
-    requestOptions(state, options={}){
-        state.query.requestOptions = options;
-        return state;
-    },
-
-    debug(state) {
-        console.log('DEBUG query:', JSON.stringify(state.query, null, 2));
-        return state;
-    }
+const failure = (message) => {
+    console.error(`[api] ${message}`);
+    return Promise.resolve({error: true, message});
 };
 
+/**
+ * Payload de cada método de banco, ou {error} quando os argumentos estão fora do contrato.
+ */
 const DB = {
-    
-    get: function(state, route, args){
 
-        let argsCount = args.length;
+    get(args) {
+        const [first] = args;
 
-        //console.log("[Get]", {args})
+        if ( first === undefined || first === null ) return {};
 
-        if ( !argsCount ) return Core.buildRequestProps(state, route);
+        if ( isScalar(first) ) return {id: first};
 
-        let firstArg = args[0];
-        let typeFirstArg = getType(firstArg);
-  
-        // .get(["nome", "idade"])
-        let isFieldsList = argsCount === 1 && typeFirstArg == 'array';
+        if ( getType(first) === 'object' ){
+            const {page, per_page, ...filters} = first;
+            const data = {filters};
 
-        let fieldsList = isFieldsList ? args[0] : args;
+            if ( page !== undefined ) data.page = page;
+            if ( per_page !== undefined ) data.per_page = per_page;
 
-        for( let i=0; i<fieldsList.length; i++ ){
-            let field = fieldsList[i];
-            state.query.fields.push(field);
+            return data;
         }
 
-        return Core.buildRequestProps(state, route);
+        return {error: 'get(): use get(), get(id) ou get({filtro: valor})'};
     },
 
-    create: function(state, route, args){
+    create(args) {
+        const [fields] = args;
 
-        let argsCount = args.length;
+        if ( getType(fields) !== 'object' ) return {error: 'create(campos): os campos precisam ser um objeto'};
 
-        if ( !argsCount ) return {error: true, message: "Está faltando dados no método: create"};
-        
-        let fields = args[0];
-
-        //console.log({args});
-
-        if ( getType(fields) !== "object" ) return {error: true, message: "Método create: os campos precisam ser um objeto"};
-
-        state.query.fields = fields;
-
-        return Core.buildRequestProps(state, route);
+        return {fields};
     },
 
-    update: function(state, route, args){
+    update(args) {
+        const [id, fields] = args;
 
-        let argsCount = args.length;
+        if ( !isScalar(id) ) return {error: 'update(id, campos): informe o id do registro'};
+        if ( getType(fields) !== 'object' ) return {error: 'update(id, campos): os campos precisam ser um objeto'};
 
-        if ( !argsCount ) return {error: true, message: "Está faltando dados no método: update"};
-
-        let firstArg = args[0];
-        let fields = {};
-        let isVerboseProps = getType(firstArg) == "object";
-
-        if ( argsCount === 2 ){
-            fields[firstArg] = args[1];
-
-        } else if ( isVerboseProps ){
-            fields = firstArg;
-
-            if ( fields.where ){
-                Core.setCondition.apply(state, ['where', state, ...fields.where])
-                delete fields.where;
-            }
-        }
-
-        state.query.fields = fields;
-
-        return Core.buildRequestProps(state, route);
+        return {id, fields};
     },
 
-    delete: function(state, route, args){
-        let argsCount = args.length;
+    delete(args) {
+        const [id] = args;
 
-        if ( argsCount ){
-            Core.setCondition.apply(state, ['where', state, ...args]);
-        }
+        if ( !isScalar(id) ) return {error: 'delete(id): informe o id do registro'};
 
-        return Core.buildRequestProps(state, route);
+        return {id};
     },
-}
-
-const Core = {
-
-    setCondition: (type, state, arg1, arg2, arg3) => {
-
-        // .where({id})
-        if ( getType(arg1) == "object" ){
-
-            Object.keys(arg1).forEach(key => {
-                let value = arg1[key];
-                state.query[type].push([key, '=', value]);
-            })
-            return state;
-        }
-
-        // where("id", "=", 123)
-        if ( arg3 ){
-            state.query[type].push([arg1, arg2, arg3]);
-            return state;
-        }
-
-        // where(["id", "=", 123],["idade", ">", 18]])
-        if ( !arg2 && Array.isArray(arg1) ){
-            state.query[type] = state.query[type].concat(arg1);
-            return state;
-        }
-
-        if ( arg1 && arg2 ){
-
-            if ( typeof arg2 == "string" && arg2.toLowerCase().includes('is') ){
-
-                // where("id", "is not null")
-                // where("id", "is null")
-                // where("id", "is not empty")
-                state.query[type].push([arg1, arg2]);
-                return state;
-            }
-
-            // where("id", 123)
-            state.query[type].push([arg1, '=', arg2]);
-        }
-
-        return state;
-    },
-
-    getStateData: () => {
-        return {
-            fields: [],
-           // onDuplicateUpdate: [],
-            requestOptions: {},
-            where: [],
-            or: [],
-            andOr: [],
-            orderBy: [],
-            limit: [],
-            page: 1,
-            //leftJoin: []
-        }
-    },
-
-    getArgs: function(args){
-        return Array.prototype.slice.call(args);
-    },
-
-    buildRequestProps: (state, route) => {
-
-        let requestOptions = state.query.requestOptions;
-
-        delete state.query.requestOptions;
-
-        let requestProps = extendObj(true, {
-            url: route.path,
-            method: route.type || 'post',
-            dataType: "json",
-            headers: {},    
-            data: state.query,
-        }, requestOptions);
-
-        // reset do state para garantir que a mesma chain não mantenha dados
-        state.query = Core.getStateData();
-
-        return requestProps;
-    },
-}
+};
 
 /**
- * Substitua essa função pelo seu request real (fetch/axios).
- * Retornamos Promise para que o consumo possa usar await/then.
+ * Junta as opções padrão com as do requestOptions(). Merge raso, exceto headers:
+ * um merge profundo transformaria FormData/Blob em objeto vazio.
  */
-function performRequest(props) {
-  // Exemplo: simula requisição assíncrona
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        ok: true,
-        props
-      });
-    }, 0);
-  });
+function buildRequest(route, data, options = {}) {
+    return {
+        url: route.path,
+        method: route.type || 'post',
+        dataType: 'json',
+        data,
+        ...options,
+        headers: {...(options.headers || {})},
+    };
 }
 
-/**
- * Api factory:
- * - routes: objeto com rotas (get/create/update/delete...)
- */
 function apiFactory(routes, config = {}) {
 
-  // detecta se um objeto é *rota* (leaf) ou um grupo
-  function isRoute(obj) {
-    return obj && typeof obj === 'object' && (
-      'method' in obj || 'path' in obj || 'type' in obj
-    );
-  }
-  
-  function isGroup(obj) {
-    return obj && typeof obj === 'object' && !isRoute(obj);
-  }
+    // rota (folha) ou grupo de rotas
+    const isRoute = (obj) => obj && typeof obj === 'object' && ('method' in obj || 'path' in obj || 'type' in obj);
+    const isGroup = (obj) => obj && typeof obj === 'object' && !isRoute(obj);
 
-  // cria um chain (builder) com STATE isolado
-  function createChain(routeGroup = routes) {
-    const state = { query: Core.getStateData() || [] };
+    function createChain(routeGroup = routes) {
+        // estado isolado por chain: só opções da requisição
+        const state = {requestOptions: {}};
 
-    // handler do chain (vai tratar fluent + rotas + subgrupos)
-    const chainHandler = {
-      get(_, prop) {
-        // 1) fluent methods (somente se não for vendor)
-        if (!config.vendor && fluent && typeof fluent[prop] === 'function') {
-          return function (...args) {
-            fluent[prop].apply(fluent, [state, ...args]);
-            return chainProxy; // encadeável e com mesmo state
-          };
-        }
+        const handler = {
+            get(_, prop) {
 
-        // 2) subgrupo (ex: routeGroup.template -> retorna novo chain para esse grupo)
-        if (isGroup(routeGroup[prop])) {
-          return createChain(routeGroup[prop]);
-        }
+                if ( prop === 'requestOptions' ){
+                    return (options = {}) => {
+                        state.requestOptions = {...state.requestOptions, ...options};
+                        return proxy;
+                    };
+                }
 
-        // 3) rota leaf => retorna função executor
-        if (isRoute(routeGroup[prop])) {
-          return function (...args) {
-            // clona rota para não mutar original
-            const route = extendObj({}, routeGroup[prop]);
+                if ( REMOVED.includes(prop) && !routeGroup[prop] ){
+                    return () => {
+                        throw new Error(
+                            `[api] ${String(prop)}() foi removido: o front não monta mais queries. `
+                            + 'Use get(), get(id), get({filtro: valor}), create(campos), update(id, campos) ou delete(id).'
+                        );
+                    };
+                }
 
-            // vendor mode: normalmente ignoramos fluent e usamos request direto
-            if (config.vendor) {
-              // se você precisar transformar path com placeholders etc, faça aqui
-              // Ex.: preencher {slug} se args vierem assim
-              // Para simplicidade, montamos requestProps com Core.buildRequestProps({}, route, args)
-              args = Core.getArgs(args);
+                if ( isGroup(routeGroup[prop]) ) return createChain(routeGroup[prop]);
 
-              let requestProps = {
-                url: route.path,
-                method: route.type || 'post',
-                dataType: "json",
-                headers: {},    
-                data: args[0] ?? {}
-              };
+                if ( !isRoute(routeGroup[prop]) ) return undefined;
 
-              return App.request(requestProps);
+                return (...args) => {
+                    const route = {...routeGroup[prop]};
+                    const options = state.requestOptions;
+
+                    // estado não vaza para a próxima chamada da mesma chain
+                    state.requestOptions = {};
+
+                    if ( config.vendor ){
+                        return App.request(buildRequest(route, args[0] ?? {}, options));
+                    }
+
+                    // rotas customizadas podem se comportar como método de banco (custom.method)
+                    const method = route.custom?.method ?? route.method;
+
+                    if ( DB_METHODS.includes(method) ){
+                        const data = DB[method](args);
+
+                        if ( data.error ) return failure(data.error);
+
+                        return App.request(buildRequest(route, data, options));
+                    }
+
+                    return App.request(buildRequest(route, args[0] ?? {}, options));
+                };
             }
-
-            // Non-vendor: considerar DbMethods ou builder
-            route.method = route.custom?.method ?? route.method;
-            let requestProps = {};
-            const isDbMethod = DbMethods.includes(route.method);
-
-            if (isDbMethod) {
-              const parsedArgs = Core.getArgs(args);
-              requestProps = DB[route.method](state, route, parsedArgs);
-
-            } else {
-
-              requestProps = extendObj(true, {
-                  url: route.path,
-                  method: route.type || 'post',
-                  dataType: "json",
-                  headers: {},    
-                  data: args[0] ?? {},
-              }, (state.query.requestOptions || {}));
-            }
-
-            // reset do state (segurança: impedindo vazamento se alguém reutilizar chain)
-            state.query = Core.getStateData();
-
-            return App.request(requestProps);
-          };
-        }
-
-        // nada encontrado
-        return undefined;
-      }
-    };
-
-    const chainProxy = new Proxy({}, chainHandler);
-    return chainProxy;
-  }
-
-  // main proxy handler (top-level: TesteApi.* ou VendorApi.*)
-  const mainHandler = {
-    get(_, prop) {
-      // 1) fluent initiation: TesteApi.where(...) -> cria chain e executa método fluent
-      if (!config.vendor && fluent && typeof fluent[prop] === 'function') {
-        return function (...args) {
-          const chain = createChain(routes);
-          return chain[prop](...args);
         };
-      }
 
-      // 2) se prop é um grupo (ex: VendorApi.template) -> retorna chain para esse grupo
-      if (isGroup(routes[prop])) {
-        return createChain(routes[prop]);
-      }
+        const proxy = new Proxy({}, handler);
 
-      // 3) se prop é rota no topo (ex: TesteApi.get()) -> cria chain para top-level e retorna função
-      if (isRoute(routes[prop])) {
-        const chain = createChain(routes);
-        return chain[prop]; // retorna a função executor definida no chain
-      }
-
-      return undefined;
+        return proxy;
     }
-  };
 
-  return new Proxy({}, mainHandler);
+    return createChain(routes);
 }
 
 export default apiFactory;

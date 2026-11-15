@@ -47,9 +47,7 @@ export default function User(){
 
             setStatus('processing');
 
-            UserManagerApi.delete({
-                user_id
-            })
+            UserManagerApi.delete(user_id)
                 .then(response => {
 
                     setStatus('ready');

@@ -12,6 +12,12 @@ return [
     'db' => [
         'table' => 'user_group',
     ],
+    // CRUD automático: o front só envia id e campos (contrato em Wep\Api\ClientPayload)
+    'api' => [
+        'primary_key' => 'user_group_id',
+        'order_by' => ['user_group_id', 'DESC'],
+        'fillable' => ['name', 'roles'],
+    ],
     'middlewares' => [],
     'constants' => [],
     'title' => 'Grupo de usuários',

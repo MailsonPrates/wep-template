@@ -12,6 +12,11 @@ return [
     'db' => [
         'table' => 'menu',
     ],
+    // CRUD automático: o front só envia id e campos (contrato em Wep\Api\ClientPayload)
+    'api' => [
+        'primary_key' => 'id',
+        'fillable' => ['name'],
+    ],
     'middlewares' => [],
     'constants' => [],
     'title' => 'Menu',

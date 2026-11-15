@@ -36,14 +36,13 @@ export default function UserGroupForm({config={}, afterSave}){
         if ( !isUpdate ) return;
         
         UserGroupApi
-        .where("user_group_id", config.id)
-        .get()
+        .get(config.id)
         .then(response => {
            //console.log({response});
 
             if ( response.error ) return Toast(response);
 
-            let item = response.data[0] || {};
+            let item = response.data || {};
             let roles = item.roles 
                 ? item.roles.split(",")
                 : []
@@ -75,14 +74,12 @@ export default function UserGroupForm({config={}, afterSave}){
 
             let save = isUpdate 
                 ? UserGroupApi
-                    .where("user_group_id", config.id)
-                    .update({
+                    .update(config.id, {
                         name,
                         roles: roles.join(",")
                     })
                 : UserGroupApi.create({
                     name,
-                    id: config.id,
                     roles: roles.join(",")
                 })
 

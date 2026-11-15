@@ -20,3 +20,4 @@ const extendObj = (target, source) => {
 
     return target;
 };
+export default extendObj;

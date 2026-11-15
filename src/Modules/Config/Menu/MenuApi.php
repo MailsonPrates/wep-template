@@ -11,8 +11,8 @@ use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\Config\Menu\Services\MenuItemService;
 use App\Modules\Config\Menu\Services\MenuService;
-use Wep\Api\ClientQuery;
-use Wep\Api\ClientQueryException;
+use Wep\Api\ClientPayload;
+use Wep\Api\InvalidPayloadException;
 
 /**
  * Classe controller responsável por implementar métodos
@@ -31,34 +31,40 @@ class MenuApi
 
     public function create($request, $response)
     {
-        // o payload é alterado (slug) antes de gravar: saneia explicitamente
         try {
-            $data = Menu::clientQuery($request->data(), 'create');
-        } catch (ClientQueryException $e) {
+            $fields = Menu::clientPayload('create')['fields'];
+        } catch (InvalidPayloadException $e) {
             return $response->json(Response::error($e->getMessage()));
         }
 
-        $name = $data['fields']['name'] ?? '';
-        $slug = Str::normalize($name);
+        // slug gerado no servidor a partir do nome
+        $slug = Str::normalize($fields['name'] ?? '');
         $slug = strtolower($slug);
-        $slug = str_replace(" ", "_", $slug);
-        $data['fields']['slug'] = $slug ;
+        $fields['slug'] = str_replace(" ", "_", $slug);
 
-        $create = MenuService::create($data);
-
-        return $response->json($create);
+        return $response->json(MenuService::create($fields));
     }
 
     public function update($request, $response)
     {
-        $data = $request->data();
-        return $response->json(MenuService::update($data));
+        try {
+            $payload = Menu::clientPayload('update');
+        } catch (InvalidPayloadException $e) {
+            return $response->json(Response::error($e->getMessage()));
+        }
+
+        return $response->json(MenuService::update($payload['id'], $payload['fields']));
     }
 
     public function delete($request, $response)
     {
-        $data = $request->data();
-        return $response->json(MenuService::delete($data));
+        try {
+            $payload = Menu::clientPayload('delete');
+        } catch (InvalidPayloadException $e) {
+            return $response->json(Response::error($e->getMessage()));
+        }
+
+        return $response->json(MenuService::delete($payload['id']));
     }
 
     public function sort($request, $response)
@@ -87,18 +93,25 @@ class MenuApi
     }
 
     /**
-     * Os itens de menu são gravados com DB::table('menu_items') (sem Model), então o payload
-     * do cliente é saneado aqui: só colunas de menu_items, update/delete por igualdade.
+     * Os itens de menu são gravados com DB::table('menu_items') (sem Model), então o contrato do
+     * cliente (id + campos) é validado aqui.
      */
     private function menuItem(string $operation, $request, $response)
     {
         try {
-            $data = ClientQuery::sanitize($request->data(), $operation, ['table' => 'menu_items']);
-        } catch (ClientQueryException $e) {
+            $payload = ClientPayload::parse($request->data(), $operation, [
+                'table' => 'menu_items',
+                'fillable' => ['title', 'permission', 'user_groups', 'external', 'type', 'link', 'menu_id', 'parent_id', 'sort_order', 'icon'],
+            ]);
+        } catch (InvalidPayloadException $e) {
             return $response->json(Response::error($e->getMessage()));
         }
 
-        return $response->json(MenuItemService::{$operation}($data));
+        return $response->json(match ($operation) {
+            'create' => MenuItemService::create($payload['fields']),
+            'update' => MenuItemService::update($payload['id'], $payload['fields']),
+            'delete' => MenuItemService::delete($payload['id']),
+        });
     }
 
     /**

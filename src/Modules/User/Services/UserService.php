@@ -33,6 +33,9 @@ class UserService
         foreach($getUsers->data as $key => $item){
 
             unset($getUsers->data[$key]['password']);
+
+            // "code" é o token de recuperação de senha: não vai para o front
+            unset($getUsers->data[$key]['code']);
             
             if ( $item['profile_image'] ){
 
@@ -168,8 +171,11 @@ class UserService
         }
     }
 
-    public static function delete($data=[])
+    /**
+     * @param string|int $userId
+     */
+    public static function delete($userId)
     {
-        return Model::delete($data);
+        return Model::deleteById($userId);
     }
 }

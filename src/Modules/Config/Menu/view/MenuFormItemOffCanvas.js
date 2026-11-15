@@ -68,7 +68,7 @@ export default function MenuFormItemOffCanvas({config={}, children, onComplete})
             console.log({payload, isUpdate});
 
             let save = isUpdate
-                ? await MenuApi.where("id", config.id).updateItem(payload)
+                ? await MenuApi.updateItem(config.id, payload)
                 : await MenuApi.createItem(payload);
 
             console.log({save});

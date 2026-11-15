@@ -8,6 +8,7 @@ use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\User\Services\SaveUser;
 use App\Modules\User\Services\Username;
 use App\Modules\Admin\UserInvite\Services\UserInviteService;
+use Wep\Api\InvalidPayloadException;
 
 /**
  * Classe controller responsável por implementar métodos
@@ -19,25 +20,28 @@ class UserInviteApi
 
     public function get($request, $response)
     {
-        $data = $request->data();
+        $getUserInvite = UserInvite::fromClient('get');
 
-        $getUserInvite = UserInvite::get($data);
+        if ( $getUserInvite->error || empty($getUserInvite->data) ) return $response->json($getUserInvite);
 
-        if ( !$getUserInvite->error ){
+        // get(id) devolve um registro; get() devolve a lista
+        $isSingle = !array_is_list($getUserInvite->data);
+        $invites = $isSingle ? [$getUserInvite->data] : $getUserInvite->data;
 
-            foreach($getUserInvite->data as $index => $item){
+        // nomes dos grupos em uma consulta (antes: uma consulta por convite)
+        $groupIds = array_values(array_unique(array_column($invites, 'user_group_id')));
+        $getUserGroups = UserGroup::get([
+            'fields' => ['user_group_id', 'name'],
+            'where' => [['user_group_id', 'in', $groupIds]]
+        ]);
+        $groupNames = array_column($getUserGroups->data ?? [], 'name', 'user_group_id');
 
-                $getUserGroup = UserGroup::get([
-                    'fields' => ['name'],
-                    'where' => [
-                        ['user_group_id', "=", $item['user_group_id']]
-                    ]
-                ]);
-
-                $getUserInvite->data[$index]['user_group_name'] = $getUserGroup->data[0]['name'] ?? "";
-            }
+        foreach( $invites as $index => $invite ){
+            $invites[$index]['user_group_name'] = $groupNames[$invite['user_group_id']] ?? "";
         }
-       
+
+        $getUserInvite->data = $isSingle ? $invites[0] : $invites;
+
         return $response->json($getUserInvite);
     }
  
@@ -174,9 +178,13 @@ class UserInviteApi
 
     public function create($request, $response)
     {
-        $data = $request->data();
-        $fields = $data['fields'];
-        return $response->json(UserInviteService::create($fields));
+        try {
+            $payload = UserInvite::clientPayload('create');
+        } catch (InvalidPayloadException $e) {
+            return $response->json(Response::error($e->getMessage()));
+        }
+
+        return $response->json(UserInviteService::create($payload['fields']));
     }
 
     public function resend($request, $response)

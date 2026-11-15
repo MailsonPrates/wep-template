@@ -12,6 +12,11 @@ return [
     'db' => [
         'table' => 'user_invite',
     ],
+    // CRUD automático: o front só envia id e campos (contrato em Wep\Api\ClientPayload)
+    'api' => [
+        'primary_key' => 'user_invite_id',
+        'order_by' => ['user_invite_id', 'DESC'],
+    ],
     'middlewares' => [],
     'constants' => [],
     'title' => "Convite de usuários",

@@ -1,10 +1,13 @@
 import { Link } from "react-router";
 import { homePath } from "core/user";
 
-/** Página de erro (403, 404...) com botão de voltar para a página inicial do usuário. */
-export default function ErrorPage({ code, description, backButton = true }) {
+/**
+ * Página de erro (403, 404...) com botão de voltar para a página inicial do usuário.
+ * @param {boolean} inline dentro do layout (TemplateMain), em vez de ocupar a tela toda
+ */
+export default function ErrorPage({ code, description, backButton = true, inline = false }) {
     return (
-        <div className="error-page">
+        <div className={inline ? "py-5 d-flex justify-content-center" : "error-page"}>
             <div>
                 <div className="d-flex align-items-center justify-content-center">
                     <div className="error-page-code">{code}</div>

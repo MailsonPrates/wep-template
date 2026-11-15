@@ -1,36 +1,47 @@
 <?php
-    
+
 namespace App\Modules\Admin\UserGroup\Middlewares;
-    
-use Wep\Http\iMiddleware;
+
+use Wep\Core;
+use Wep\Http\Middleware;
 use Wep\Response;
+use Wep\View\Template\Template;
+use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\User\User;
 
-class CheckPermission implements iMiddleware
+/**
+ * Permissão da rota (role em custom.role, definida no build pelo AddRoleToRoutes).
+ *
+ *  - API sem permissão: 403 em JSON;
+ *  - página sem permissão: 403 com o layout do app mostrando "Acesso negado". A página NÃO é executada
+ *    (antes era: o servidor só conferia APIs, então qualquer usuário logado abria qualquer página pela URL;
+ *    num template que coloca dados no HTML, esses dados vazavam).
+ *  - a Home é liberada para todo usuário logado (é a página inicial padrão dos grupos).
+ */
+class CheckPermission implements Middleware
 {
-    /**
-    * @param Request $request
-    * @param \Closure $next
-    */
     public function handle($request, $next)
     {
         $route = $request->routeMapData();
-        $route_method = $route->method;
+        $role = (string) ($route->custom['role'] ?? '');
+        $isApi = (bool) ($route->method ?? false);
 
-        if ( !$route_method ){
+        if ( !$isApi && $role === Roles::DEFAULT_HOME_ROLE ){
             $next();
             return true;
         }
 
-        $route_role = $route->custom['role'] ?? "";
-        $user_permissions = User::getData('permissions');
+        $permissions = (array) User::getData('permissions');
 
         // sem grupo/permissões (null) → sem acesso, em vez de TypeError
-        $has_permission = $route_role !== '' && in_array($route_role, (array) $user_permissions, true);
+        if ( $role !== '' && in_array($role, $permissions, true) ){
+            $next();
+            return true;
+        }
 
-        if ( !$has_permission ){
-            // 403 de verdade (antes 200 com http_code só no corpo)
-            http_response_code(403);
+        http_response_code(403);
+
+        if ( $isApi ){
             header('Content-Type: application/json');
 
             echo Response::json([
@@ -41,7 +52,19 @@ class CheckPermission implements iMiddleware
             exit();
         }
 
-        $next();
-        return true;
+        self::forbiddenPage($route, $request);
+        exit();
+    }
+
+    /**
+     * Layout padrão do app (src/Common/Templates/Main) com a tela de acesso negado. Usa sempre o
+     * template padrão, nunca o da rota: um template próprio poderia montar os dados da página.
+     */
+    private static function forbiddenPage($route, $request): void
+    {
+        $route->forbidden = true;
+        $route->document_title = 'Acesso negado | ' . Core::config('name|title', 'App');
+
+        echo (new Template(APP_TEMPLATES_NAMESPACE . 'Main', $route, $request))->build();
     }
 }

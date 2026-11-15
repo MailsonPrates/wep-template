@@ -45,7 +45,16 @@ php -S localhost:8000 router.php
 ```
 
 O `router.php` faz o papel do `.htaccess`, que o servidor embutido do PHP não lê. Ele só funciona no `php -S`.
-No Apache, aponte o DocumentRoot para `public/`.
+Com o `wep/framework` 2.0.1 ou mais novo ele é opcional (`php -S localhost:8000` também funciona: o roteador
+usa o caminho real da URL), mas continua recomendado.
+No Apache, aponte o DocumentRoot para `public/`. No Nginx: `try_files $uri /index.php$is_args$args;`.
+
+### Permissões
+
+Toda página e API com o middleware `checkPermission` exige a permissão correspondente no grupo do usuário
+(Admin > Grupo de usuários). Página sem permissão responde 403 e mostra "Acesso negado" dentro do layout,
+sem executar a página; a navegação dentro do app confere a mesma regra antes de abrir a tela. A Home é
+liberada para todo usuário logado.
 
 ### Front (React)
 

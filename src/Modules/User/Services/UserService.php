@@ -2,7 +2,7 @@
 
 namespace App\Modules\User\Services;
 
-use App\Core\Image;
+use App\Common\Tools\Image;
 use App\Modules\User\User as Model;
 use App\Core\Response;
 use Wep\Security\Token;

@@ -2,8 +2,8 @@
     
 namespace App\Modules\Login\Middlewares;
     
-use App\Core\Http\iMiddleware;
-use App\Core\Session;
+use Wep\Http\iMiddleware;
+use Wep\Session;
 use App\Modules\LoginPersistent\Services\DestroyPersistentLogin;
 
 class Logout implements iMiddleware

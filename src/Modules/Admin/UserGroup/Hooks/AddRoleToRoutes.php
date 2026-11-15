@@ -3,7 +3,7 @@
 namespace App\Modules\Admin\UserGroup\Hooks;
 
 use App\Modules\Admin\UserGroup\Services\Roles;
-use App\Core\Str;
+use Wep\Str;
 
 class AddRoleToRoutes
 {

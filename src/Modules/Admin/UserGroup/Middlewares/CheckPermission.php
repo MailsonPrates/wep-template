@@ -2,8 +2,8 @@
     
 namespace App\Modules\Admin\UserGroup\Middlewares;
     
-use App\Core\Http\iMiddleware;
-use App\Core\Response;
+use Wep\Http\iMiddleware;
+use Wep\Response;
 use App\Modules\User\User;
 
 class CheckPermission implements iMiddleware

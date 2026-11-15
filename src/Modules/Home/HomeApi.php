@@ -2,7 +2,7 @@
  
 namespace App\Modules\Painel\Home;
  
-use App\Core\Controller;
+use Wep\Controller;
 
 /**
  * Classe controller responsável por implementar métodos

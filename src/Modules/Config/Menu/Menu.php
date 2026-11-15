@@ -2,7 +2,7 @@
  
 namespace App\Modules\Config\Menu;
  
-use App\Core\Model;
+use Wep\Model;
  
 /**
  * Classe model responsável por implementar métodos

@@ -2,7 +2,7 @@
  
 namespace App\Modules\User;
  
-use App\Core\Model;
+use Wep\Model;
 use App\Modules\User\Traits\UserData;
 
 /**

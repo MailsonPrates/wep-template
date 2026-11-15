@@ -2,8 +2,8 @@
  
 namespace App\Modules\Admin\UserGroup;
  
-use App\Core\Controller;
-use App\Core\Response;
+use Wep\Controller;
+use Wep\Response;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Services\MenuService;
 use App\Modules\User\User;

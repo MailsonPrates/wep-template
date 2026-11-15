@@ -2,9 +2,9 @@
 
 namespace App\Modules\Config\Menu\Services;
 
-use App\Core\Cache;
-use App\Core\DB;
-use App\Core\File;
+use Wep\Cache;
+use Wep\DB;
+use Wep\File;
 
 class MenuItemService
 {

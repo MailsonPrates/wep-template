@@ -2,8 +2,8 @@
  
 namespace App\Modules\Admin\UserManager;
  
-use App\Core\Controller;
-use App\Core\Response;
+use Wep\Controller;
+use Wep\Response;
 use App\Modules\User\Services\UserService;
 use App\Modules\User\User;
 use Wep\Api\InvalidPayloadException;

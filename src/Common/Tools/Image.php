@@ -2,7 +2,7 @@
 
 namespace App\Common\Tools;
 
-use App\Core\Str;
+use Wep\Str;
 
 class Image {
 	private $file;

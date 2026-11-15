@@ -2,7 +2,7 @@
 
 namespace App\Modules\Admin\UserGroup\Hooks;
 
-use App\Core\File;
+use Wep\File;
 use App\Modules\Admin\UserGroup\Services\Roles;
 
 class CreatePathByRoleMap

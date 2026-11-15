@@ -2,8 +2,8 @@
  
 namespace App\Modules\Admin\UserInvite;
  
-use App\Core\Controller;
-use App\Core\Response;
+use Wep\Controller;
+use Wep\Response;
 use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\User\Services\SaveUser;
 use App\Modules\User\Services\Username;

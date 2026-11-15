@@ -2,7 +2,7 @@
 
 namespace App\Modules\Admin\UserInvite\Services;
 
-use App\Core\Response;
+use Wep\Response;
 use App\Modules\User\User;
 use App\Modules\Admin\UserInvite\UserInvite;
 

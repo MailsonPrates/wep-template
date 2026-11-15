@@ -2,7 +2,7 @@
 
 namespace App;
 
-use App\Core\Core;
+use Wep\Core;
 
 class App extends Core
 {

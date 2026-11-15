@@ -2,8 +2,8 @@
 
 namespace App\Modules\Config\Menu\Services;
 
-use App\Core\Cache;
-use App\Core\DB;
+use Wep\Cache;
+use Wep\DB;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Menu;
 use App\Modules\User\User;

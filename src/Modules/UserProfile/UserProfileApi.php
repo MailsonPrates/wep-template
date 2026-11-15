@@ -2,12 +2,12 @@
  
 namespace App\Modules\UserProfile;
  
-use App\Core\Controller;
-use App\Core\Session;
+use Wep\Controller;
+use Wep\Session;
 use App\Modules\User\Services\SaveUser;
 use App\Modules\User\User;
 use App\Common\Tools\Upload;
-use App\Core\Response;
+use Wep\Response;
 
 /**
  * Classe controller responsável por implementar métodos

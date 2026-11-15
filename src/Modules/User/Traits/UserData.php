@@ -3,7 +3,7 @@
 namespace App\Modules\User\Traits;
 
 use App\Common\Tools\Image;
-use App\Core\Session;
+use Wep\Session;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Services\MenuService;
 

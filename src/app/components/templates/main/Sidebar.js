@@ -7,7 +7,7 @@ import SidebarToggleBtn from "./SidebarToggleBtn";
 
 export default function Sidebar(){
 
-    const user = App.data("user") || {};
+    const user = App.config("user") || {};
     const menu = (user.menu.filter(item => item.slug === "principal") || [])[0] || {};
     const menuList = menu.child || [];
     const { openMenus, isSidebarOpen, toggleMenu, toggleSidebar } = useSidebar();

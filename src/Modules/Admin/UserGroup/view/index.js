@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import {MainTemplate, Empty} from "components";
+import {TemplateMain, Empty} from "components";
 import {useReqToast} from 'hooks';
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
 import {UserGroupApi} from "api";
@@ -52,7 +52,6 @@ export default function UserGroup(){
         .get()
         .then(function(response){
 
-            console.log({response})
 
             if ( response.error ) return Toast(response);
 
@@ -104,9 +103,9 @@ export default function UserGroup(){
     }
 
      return (
-        <MainTemplate title="Grupos de usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Grupos de usuários" breadcrumbs={['page.admin']}>
             <Header />
             <DataList />
-        </MainTemplate>
+        </TemplateMain>
     )
 }

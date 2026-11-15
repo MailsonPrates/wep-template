@@ -35,13 +35,11 @@ export default function MenuFormOffCanvas({config={}, children, onComplete}){
                 name
             }
 
-            console.log({payload});
 
             let save = isUpdate
                 ? await MenuApi.update(config.id, payload)
                 : await MenuApi.create(payload);
 
-            console.log({save});
 
             setStatus("ready");
 

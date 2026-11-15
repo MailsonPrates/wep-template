@@ -1,4 +1,4 @@
-import {MainTemplate, Empty} from "components";
+import {TemplateMain, Empty} from "components";
 import {UserInviteApi} from "api";
 import {useReqToast} from 'hooks';
 import React, { useEffect, useState } from "react";
@@ -95,7 +95,6 @@ export default function UserInvite(){
             UserInviteApi.get()
             .then(function(response){
 
-                console.log({response});
 
                 if ( response.error ) return Toast(response);
 
@@ -199,9 +198,9 @@ export default function UserInvite(){
     }
 
     return (
-        <MainTemplate title="Convites de usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Convites de usuários" breadcrumbs={['page.admin']}>
             <Header />
             <DataList />
-        </MainTemplate>
+        </TemplateMain>
     )
 }

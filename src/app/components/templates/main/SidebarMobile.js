@@ -5,7 +5,7 @@ import App from "app";
 
 export default function SidebarMobile({show, close}){
 
-    const user = App.data("user") || {};
+    const user = App.config("user") || {};
     const menu = (user.menu.filter(item => item.slug === "principal") || [])[0] || {};
     const menuList = menu.child || [];
 

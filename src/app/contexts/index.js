@@ -1,3 +1,3 @@
-export {default as ToastProvider} from "components/toast/TextContext";
-export {default as SidebarContext} from "components/templates/main/SidebarContext";
-export {default as ErrorProvider} from "components/error/ErrorContext";
+export {ToastProvider, useToast} from "components/toast/ToastContext";
+export {SidebarProvider, useSidebar} from "components/templates/main/SidebarContext";
+export {ErrorProvider, useError} from "components/error/ErrorContext";

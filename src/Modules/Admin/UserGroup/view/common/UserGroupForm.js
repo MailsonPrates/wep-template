@@ -25,7 +25,6 @@ export default function UserGroupForm({config={}, afterSave}){
         .getRoles()
         .then(response => {
         
-            console.log({response});
 
             if ( response.error ) return Toast(response);
 
@@ -70,7 +69,6 @@ export default function UserGroupForm({config={}, afterSave}){
 
             setStatus("processing");
 
-            console.log({roles});
 
             let save = isUpdate 
                 ? UserGroupApi
@@ -163,7 +161,6 @@ export default function UserGroupForm({config={}, afterSave}){
             let methodRole = method.role;
             let isSelected = rolesSelected.includes(methodRole);
 
-            console.log({method, page, rolesSelected, methodRole, isSelected});
 
             if ( isSelected ){
                 rolesSelected = rolesSelected.filter(role => role !== methodRole);
@@ -197,7 +194,6 @@ export default function UserGroupForm({config={}, afterSave}){
                 rolesSelected.push(page.role);
             }
 
-             console.log({rolesSelected})
 
             setRoles(rolesSelected);
         },

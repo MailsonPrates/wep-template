@@ -5,7 +5,7 @@ import Nav from "./Nav";
 const TemplateClean = ({documentTitle, title, children, header, fluid}) => {
 
     useEffect(() => {
-        document.title = `${documentTitle} | ${App.data("title", "Wep")}`
+        document.title = `${documentTitle} | ${App.config("title", "Wep")}`
     }, []);
 
     return (

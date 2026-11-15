@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import App from "app";
 import { Row, Col } from "react-bootstrap";
-import Breadcrumbs from "./breadcrumbs";
+import Breadcrumbs from "./Breadcrumbs";
 import Nav from "./Nav";
 import Sidebar from "./Sidebar";
 import "./main.scss";
@@ -10,7 +10,7 @@ import SidebarMobile from "./SidebarMobile";
 const TemplateMain = ({title="Sem título", children, header, breadcrumbs}) => {
 
     useEffect(() => {
-        document.title = `${title} | ${App.data("title", "Wep")}`
+        document.title = `${title} | ${App.config("title", "Wep")}`
     }, [title]);
 
     const [showSidebarMobile, setShowSidebarMobile] = useState(false);

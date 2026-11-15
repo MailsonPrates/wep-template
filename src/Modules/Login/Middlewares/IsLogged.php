@@ -26,6 +26,13 @@ class IsLogged implements Middleware
         if ( !Session::get("user_id") && !self::restorePersistentLogin() ){
 
             if ( $is_api ){
+                // o front vai para o login: guarda a tela de onde veio a chamada para voltar a ela
+                self::rememberReferer();
+
+                // 401 de verdade (antes 200): o front (request.js) leva ao login
+                http_response_code(401);
+                header('Content-Type: application/json');
+
                 echo Response::json([
                     'error' => true,
                     'message' => 'Sessão expirada! Redirecionando para o login...',
@@ -41,6 +48,28 @@ class IsLogged implements Middleware
 
         $next();
         return true;
+    }
+
+    /**
+     * Página de onde veio a chamada de API (Referer do próprio site), para voltar a ela depois do
+     * login. Referer de outro domínio ou caminho inseguro é ignorado.
+     */
+    private static function rememberReferer(): void
+    {
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $parts = $referer !== '' ? parse_url($referer) : false;
+
+        if ( !$parts || empty($parts['host']) ) return;
+
+        $host = strtolower(explode(':', (string) ($_SERVER['HTTP_HOST'] ?? ''))[0]);
+
+        if ( $host === '' || strtolower($parts['host']) !== $host ) return;
+
+        $path = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
+
+        if ( str_starts_with($path, '/login') || !Auth::isSafePath($path) ) return;
+
+        Session::set("uri", $path);
     }
 
     /**

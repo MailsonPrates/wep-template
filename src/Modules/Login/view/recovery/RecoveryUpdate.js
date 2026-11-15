@@ -32,18 +32,15 @@ export default function RecoveryUpdate(config){
         onChange: e => {
             let name = e.target.name;
             let value = e.target.value;
-            console.log("onChange", {name, value});
 
             if ( name == "password" ) setPassword(value);
             if ( name == "confirmPassword" ) setConfirmPassword(value);
         },
 
         handleSubmit: async () => {
-            console.log("handle submit")
 
             if ( !Core.validatePassword() ) return;
 
-            console.log("aqui");
 
             setStatus("processing");
 
@@ -52,7 +49,6 @@ export default function RecoveryUpdate(config){
                 code
             });
 
-            console.log({submit})
 
             if ( submit.error ){
                 setStatus('ready');
@@ -80,7 +76,6 @@ export default function RecoveryUpdate(config){
             let isEqual = (pass === confirmPass);
             let isMissing = (!pass || !confirmPass);
 
-            console.log({isEqual, pass, confirmPass})
 
             if ( isMissing ) {
                 setIsValidPasswords(null);
@@ -108,7 +103,6 @@ export default function RecoveryUpdate(config){
                 code
             });
 
-            console.log({validateCode})
 
             if ( validateCode.error ){
                 setErrorMessage(validateCode.message);

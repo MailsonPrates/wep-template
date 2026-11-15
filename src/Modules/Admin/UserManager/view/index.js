@@ -1,4 +1,4 @@
-import {MainTemplate, Empty} from "components";
+import {TemplateMain, Empty} from "components";
 import {UserManagerApi} from "api";
 import {params} from "helpers";
 import { useEffect, useState } from "react";
@@ -29,7 +29,6 @@ export default function User(){
         UserManagerApi.get()
             .then(function(response){
 
-                console.log({response});
 
                 if ( response.error ) return Toast(response)
 
@@ -74,7 +73,6 @@ export default function User(){
                 user_id
             });
 
-            console.log({resetPassword})
 
             setStatus("ready");
 
@@ -157,11 +155,11 @@ export default function User(){
     }
 
     return (
-        <MainTemplate title="Usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Usuários" breadcrumbs={['page.admin']}>
             <Header />
             <div className={`mt-2${status === "processing" ? ' full-loading' : ''}`}>
                 <DataList />
             </div>
-        </MainTemplate>
+        </TemplateMain>
     )
 }

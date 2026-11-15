@@ -55,13 +55,11 @@ export default function UserInviteSignup(){
                 token
             }
 
-            console.log({payload});
 
             setStatus("processing");
 
             let registerUser = await UserInviteApi.registerUser(payload);
 
-            console.log({registerUser});
 
         
             if ( registerUser.error ) {
@@ -132,7 +130,6 @@ export default function UserInviteSignup(){
 
                 if ( !inputTypes.includes(tag) || !isRequired ) continue;
                 if ( value ){
-                    console.log({$elem, showInvalid})
                     /*showInvalid && */$elem.classList.remove("is-invalid")
                     continue;
                 }
@@ -158,13 +155,11 @@ export default function UserInviteSignup(){
             let isMissing = (!pass || !confirmPass);
 
             if ( isMissing ) {
-                console.log({isMissing})
                 setIsValidPasswords(null);
                 return null;
             }
 
             if ( isEqual ) {
-                console.log({isEqual, pass, confirmPass})
                 setIsValidPasswords(true)
                 return true;
             }
@@ -176,7 +171,6 @@ export default function UserInviteSignup(){
 
         validateUsername: async () => {
 
-            console.log("Validanting...");
 
             setValidated(false);
 
@@ -187,13 +181,11 @@ export default function UserInviteSignup(){
 
             if ( usernameCheckStatus === "checking" ) return;
 
-            console.log("Checking...");
 
             setUsernameCheckStatus("checking")
 
             let response = await UserInviteApi.validateUsername({username})
 
-            console.log({response});
 
             if ( response.error ) {
                 setUsernameCheckStatus("invalid")
@@ -213,7 +205,6 @@ export default function UserInviteSignup(){
         validateInvite: async () => {
             let validateInvite = await UserInviteApi.validate({token});
     
-            console.log({validateInvite});
     
             if ( validateInvite.error ) {
                 setStatus("error");

@@ -1,7 +1,7 @@
 import {MenuApi} from "api";
 import React, { useEffect, useState } from "react";
 import {useReqToast} from 'hooks';
-import {MainTemplate} from "components";
+import {TemplateMain} from "components";
 import { Button } from "react-bootstrap";
 import { HiOutlineTrash, HiMiniPlus, HiChevronDown, 
     HiArrowTurnDownRight, HiOutlinePlusCircle, HiOutlinePencilSquare  } from "react-icons/hi2";
@@ -33,7 +33,6 @@ export default function Menu(){
 
             let remove = await MenuApi.delete(props.id);
 
-            console.log({remove});
 
             setStatus("ready");
 
@@ -72,7 +71,6 @@ export default function Menu(){
 
             setStatus("ready")
 
-            console.log({remove})
 
             if ( remove.erro ) return Toast(remove)
 
@@ -90,7 +88,6 @@ export default function Menu(){
 
         onEndSort: async (props, b, c) => {
 
-            console.log("[onEndSort]", {props, menuMaps, menus});
 
             let menuUpdated = menuMaps[props.id];
             let menusCloned = JSON.parse(JSON.stringify(menus));
@@ -113,7 +110,6 @@ export default function Menu(){
                 items: idsToUpdate
             })
 
-            console.log({updateSort})
 
             if ( updateSort.error ) return Toast(updateSort);
         },
@@ -136,7 +132,6 @@ export default function Menu(){
 
             let getMenus = await MenuApi.get();
 
-            console.log("[MOUNT]", {getMenus});
 
             setStatus('ready');
     
@@ -339,11 +334,11 @@ export default function Menu(){
     }
 
     return (
-        <MainTemplate title="Menus" breadcrumbs={['page.config']}>
+        <TemplateMain title="Menus" breadcrumbs={['page.config']}>
            <div className={`body${status === "processing" ? ' full-loading' : ""}`}>
                 <Header />
                 <Content />
            </div>
-        </MainTemplate>
+        </TemplateMain>
     )
 }

@@ -3,7 +3,6 @@ import { FloatingLabel, Form } from "react-bootstrap";
 
 export default function Route({value, onChange, onKeyDown, routesList=[]}){
 
-    console.log({value, routesList})
 
     return (
         <FloatingLabel key="route" label="Rota" className="mb-2">

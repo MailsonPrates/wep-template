@@ -2,7 +2,6 @@ import React from "react";
 import { FloatingLabel, Form } from "react-bootstrap";
 
 export default function Permission({value, onChange, onKeyDown, permissionList=[]}){
-    console.log({permissionList});
     return (
         <FloatingLabel key="permission" label="Permissão" className="mb-2">
             <Form.Select name="permission" onChange={onChange} value={value} onKeyDown={onKeyDown} required>

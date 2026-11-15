@@ -1,4 +1,4 @@
-import {MainTemplate} from "components";
+import {TemplateMain} from "components";
 import UserForm from "./common/UserForm";
 import { Link } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";
@@ -20,9 +20,9 @@ export default function UserCreate(){
     }
 
     return (
-        <MainTemplate title="Criar novo usuário" breadcrumbs={["page.admin", "page.admin.user"]}>
+        <TemplateMain title="Criar novo usuário" breadcrumbs={["page.admin", "page.admin.user"]}>
             <Header />
             <UserForm afterSave={() => navigate("/admin/user/")}/>
-        </MainTemplate>
+        </TemplateMain>
     )
 }

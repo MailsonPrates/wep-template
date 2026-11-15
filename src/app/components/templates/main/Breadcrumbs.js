@@ -5,8 +5,11 @@ import App from "app";
 
 export default function Breadcrumbs(props){
 
-    let list = props.list || [];
-    list = list.map(item => typeof item === "string" ? App.route(item) : item)
+    // "page.admin" → {title, path} pelo mapa de permissões; permissão desconhecida é ignorada
+    let list = Array.isArray(props.list) ? props.list : [];
+    list = list
+        .map(item => typeof item === "string" ? App.route(item) : item)
+        .filter(item => item && item.title);
 
     list.unshift({
         title: "Início",
@@ -19,7 +22,7 @@ export default function Breadcrumbs(props){
             <ol className="breadcrumb mb-0 fs-14 text-secondary">
                 {
                     list.map((item, i) => 
-                        <li key={item.title} className={`breadcrumb-item${item.active ? ' active' : ''}`}>
+                        <li key={`${i}-${item.title}`} className={`breadcrumb-item${item.active ? ' active' : ''}`}>
                             {
                                 item.active 
                                     ? item.title

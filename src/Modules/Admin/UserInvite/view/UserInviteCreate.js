@@ -1,4 +1,4 @@
-import {MainTemplate} from "components";
+import {TemplateMain} from "components";
 import UserInviteForm from "./common/UserInviteForm";
 
 import { useNavigate } from "react-router";
@@ -13,8 +13,8 @@ export default function UserInviteCreate(){
     ]
 
     return (
-        <MainTemplate title="Novo convite de usuário" breadcrumbs={breadcrumbs}>
+        <TemplateMain title="Novo convite de usuário" breadcrumbs={breadcrumbs}>
             <UserInviteForm afterSave={() => navigate("/admin/user/invite/", {state: {update: true}})}/>
-        </MainTemplate>
+        </TemplateMain>
     )
 }

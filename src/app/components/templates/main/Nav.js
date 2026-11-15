@@ -8,9 +8,8 @@ import { HiOutlineUser, HiOutlineArrowRightOnRectangle,
 
 export default function Nav({toggleSidebarMobile}){
     
-    let user = App.data("user") || {};
+    let user = App.config("user") || {};
 
-    console.log({user})
 
     let nickname = user.nickname || "";
     let firstname = user.firstname || "";

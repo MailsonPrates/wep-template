@@ -52,7 +52,6 @@ export default function UserInviteForm(config={}){
 
             setStatus("processing");
 
-            console.log({payload})
 
             let save = await UserInviteApi.create(payload);
 
@@ -75,13 +74,11 @@ export default function UserInviteForm(config={}){
 
         getGroups: async () => {
 
-            console.log("[Mount]")
 
             let getUserGroups = await UserGroupApi.get();
 
             setStatus("ready");
 
-            console.log({getUserGroups, config});
 
             if ( getUserGroups.error ) return Toast(getUserGroups)
 

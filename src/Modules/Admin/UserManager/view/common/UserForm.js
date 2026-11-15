@@ -40,11 +40,9 @@ export default function UserForm(config={}){
         
         const onMount = async () => {
 
-            console.log("[Mount]")
 
             let getUserGroups = await UserGroupApi.get();
 
-            console.log({getUserGroups, config});
 
             if ( getUserGroups.error ){
                 setPageStatus("ready");
@@ -60,7 +58,6 @@ export default function UserForm(config={}){
 
             let getUser = await UserManagerApi.get(config.id);
 
-            console.log({getUser});
 
             if ( getUser.error ) return Toast(getUser);
 
@@ -121,7 +118,6 @@ export default function UserForm(config={}){
 
             setPageStatus("processing");
 
-            console.log({payload})
 
             let saveUser = await UserManagerApi.save(payload);
 

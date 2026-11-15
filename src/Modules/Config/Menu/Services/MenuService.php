@@ -6,22 +6,24 @@ use Wep\Cache;
 use Wep\DB;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Menu;
-use App\Modules\User\User;
 
+/**
+ * Menus e a árvore de itens, com cache:
+ *  - "menu": todos os menus com todos os itens (tela de administração);
+ *  - "menu_user_group.<id>": só o que o grupo pode ver (vai para window.App.user.menu).
+ *
+ * Cada item chega pronto para o front: `link` (rota resolvida pela permissão), `icon_name` e
+ * `icon_svg` (desenho do ícone, ver MenuIcons).
+ */
 class MenuService
 {
-    private static $childTable = null;
-    private static $route_by_roles = [];
+    public const TYPES = ['route', 'group', 'external_link', 'text'];
 
     public static function get()
     {
         $cache = Cache::get('menu');
 
-        if ( $cache ) return $cache;
-
-        $menus = self::buildMenusCache();
-        
-        return $menus;
+        return $cache !== false ? $cache : self::buildMenusCache();
     }
 
     /**
@@ -31,10 +33,7 @@ class MenuService
     {
         $create = Menu::create(['fields' => $fields]);
 
-        if ( !$create->error ){
-            self::buildMenusCache();
-            User::updateSession();
-        }
+        if ( !$create->error ) self::buildMenusCache();
 
         return $create;
     }
@@ -43,238 +42,176 @@ class MenuService
     {
         $update = Menu::updateById($id, $fields);
 
-        if ( !$update->error ){
-            self::buildMenusCache();
-            User::updateSession();
-        }
+        if ( !$update->error ) self::buildMenusCache();
 
         return $update;
     }
 
     public static function delete($id)
     {
-        // Deleta menu items
-        $childTable = DB::table('menu_items');
-
-        $deleteItems = $childTable->delete([
-            'where' => [
-                ['menu_id', '=', $id]
-            ]
+        $deleteItems = DB::table('menu_items')->delete([
+            'where' => [['menu_id', '=', $id]]
         ]);
 
         if ( $deleteItems->error ) return $deleteItems;
 
         $deleteMenu = Menu::deleteById($id);
 
-        if ( $deleteMenu->error ) return $deleteMenu;
-
-        self::buildMenusCache();
-        User::updateSession();
+        if ( !$deleteMenu->error ) self::buildMenusCache();
 
         return $deleteMenu;
     }
 
-    private static function getChild($id)
-    {
-        if ( !self::$childTable ){
-            self::$childTable = DB::table('menu_items');
-        }
-
-        $table = self::$childTable;
-
-        $getItems = $table->get([
-            'where' => [
-                ['menu_id', '=', $id],
-                ['parent_id', '=', 0]
-            ],
-            'orderBy' => ['sort_order', 'ASC']
-        ]);
-
-        $menu_items = $getItems->data ?? [];
-
-        foreach($menu_items as $i => $item){
-
-            if ( $item['type'] === "route" ){
-                $permission = $item['permission'] ?? null;
-                $role = self::$route_by_roles[$permission] ?? [];
-                $path = $role['path'] ?? "";
-                
-                $menu_items[$i]['link'] = $path;
-            }
-
-            $menu_items[$i]['child'] = self::getParent($item['id']);
-        }
-
-        return $menu_items;
-    }
-
-    private static function getParent($item_id)
-    {   
-        if ( !self::$childTable ){
-            self::$childTable = DB::table('menu_items');
-        }
-
-        $table = self::$childTable;
-
-        $getItems = $table->get([
-            'where' => [
-                ['parent_id', '=', $item_id]
-            ],
-            'orderBy' => ['sort_order', 'ASC']
-        ]);
-
-        $parent_items = $getItems->data;
-
-        foreach($parent_items as $i => $item){
-
-             if ( $item['type'] === "route" ){
-                $permission = $item['permission'] ?? null;
-                $role = self::$route_by_roles[$permission] ?? [];
-                $path = $role['path'] ?? "";
-
-                $parent_items[$i]['link'] = $path;
-            }
-
-            $parent_items[$i]['child'] = self::getParent($item['id']);
-        }
-
-        return $parent_items;
-    }
-
+    /**
+     * @param array $items [{id, sort_order}]
+     */
     public static function sort($items)
     {
-        $childTable = DB::table('menu_items');
+        $table = DB::table('menu_items');
 
-        foreach($items as $item){
-            $id = $item['id'];
-            $sort_order = intval($item['sort_order']);
+        foreach( (array) $items as $item ){
+            $id = (int) ($item['id'] ?? 0);
 
-            $childTable->update([
-                'fields' => [
-                    'sort_order' => $sort_order
-                ],
-                'where' => [
-                    ['id', '=', $id]
-                ]
-            ]);
+            if ( $id <= 0 ) continue;
+
+            $table->where('id', '=', $id)->update(['sort_order' => (int) ($item['sort_order'] ?? 0)]);
         }
 
         self::buildMenusCache();
-        User::updateSession();
 
         return self::get();
     }
 
     public static function buildMenusCache()
     {
-        self::$route_by_roles = Roles::getList();
+        $getMenus = Menu::get(['orderBy' => ['id', 'ASC']]);
 
-        $getMenus = Menu::get();
+        if ( $getMenus->error ) return [];
 
-        if ( $getMenus->error ) return $getMenus;
+        $getItems = DB::table('menu_items')->orderBy('sort_order')->get();
+        $paths = self::pathsByRole();
 
-        $menus = $getMenus->data;
+        // itens agrupados por menu e por pai (duas consultas no total; antes uma por item)
+        $byParent = [];
 
-        foreach($menus as $i => $menu){
-            $menus[$i]['child'] = self::getChild($menu['id']) ?? [];
+        foreach( $getItems->data ?? [] as $item ){
+            $byParent[(int) $item['menu_id']][(int) $item['parent_id']][] = self::prepareItem($item, $paths);
         }
 
-        $menus_by_user_groups = self::buildUserGroupMenus($menus);
+        $menus = [];
 
-        foreach($menus_by_user_groups as $group_id => $group_menus){
-            Cache::set('menu_user_group.'.$group_id, $group_menus, false);
+        foreach( $getMenus->data ?? [] as $menu ){
+            $menu['child'] = self::tree($byParent[(int) $menu['id']] ?? [], 0);
+            $menus[] = $menu;
         }
 
-        Cache::set("menu", $menus, false);
-        
+        Cache::set('menu', $menus, false);
+
+        foreach( self::buildUserGroupMenus($menus) as $groupId => $groupMenus ){
+            Cache::set('menu_user_group.' . $groupId, $groupMenus, false);
+        }
+
         return $menus;
     }
 
+    /**
+     * Menus de cada grupo: itens "route" só com a permissão da página; os demais tipos só para os
+     * grupos marcados em "Usuários permitidos".
+     *
+     * @return array<int, array> id do grupo => menus
+     */
     public static function buildUserGroupMenus($menus = [])
     {
-        // resultado cru da consulta
-        $getUserGroup = DB::table("user_group")->get();
-        $user_groups = $getUserGroup->data ?? [];
+        $groups = DB::table('user_group')->get('user_group_id', 'roles');
+        $result = [];
 
-        $menus_by_user_group = [];
+        foreach( $groups->data ?? [] as $group ){
+            $groupId = (int) $group['user_group_id'];
+            $roles = array_filter(explode(',', (string) $group['roles']));
 
-        // função recursiva para validar permissões nos childs
-        $checkChilds = function (&$childs, $group_roles, $group_id) use (&$checkChilds) {
-            foreach ($childs as $index => &$child) {
-                
-                $permission = $child['permission'];
-                $item_user_groups = $child['user_groups'] ?? "";
-
-                // se não tem permissão, remove
-                $route_has_not_permission = !in_array($permission, $group_roles);
-
-               //if ( $child['type'] !== "route" ){
-                    //echo 'title: '.$child['title'] . ' | ' . 'group_id: ' . $group_id .'<br>';
-                    //echo 'type: '.$child['type'] . '<br>';
-                    //echo 'item_user_groups: ' . $item_user_groups . '<br>';
-                    //echo 'permission: ' . $child['permission'] . '<br>';
-                    //echo 'has: ' . str_contains($item_user_groups, $group_id) . '<br>';
-                    //echo '---' . '<br>';
-               //}
-
-                if ( $child['type'] !== "route" ){
-                   
-                    if ( !str_contains($item_user_groups, $group_id) ){
-                        unset($childs[$index]);
-                    }
-                } else
-
-                if ( $route_has_not_permission ) {
-                   unset($childs[$index]);
-                   continue;
-                }
-
-                // se tiver filhos, verifica eles também
-                if (!empty($child['child'])) {
-                    $checkChilds($child['child'], $group_roles, $group_id);
-                }
-            }
-
-            // reindexa para evitar buracos (garante que será array e não objeto)
-            $childs = array_values($childs);
-        };
-
-        foreach ($user_groups as $user_group) {
-            $group_id = $user_group['user_group_id'] ?? null;
-            $group_roles = $user_group['roles'] ?? "";
-            $group_roles = array_filter(explode(",", $group_roles));
-
-            $group_menus = [];
-
-            foreach ($menus as $menu) {
-                $menuCopy = $menu;
-
-                if (!empty($menuCopy['child'])) {
-                    $checkChilds($menuCopy['child'], $group_roles, $group_id);
-                }
-
-                $group_menus[] = $menuCopy;
-            }
-
-            $menus_by_user_group[$group_id] = $group_menus;
+            $result[$groupId] = array_map(function ($menu) use ($groupId, $roles) {
+                $menu['child'] = self::filterForGroup($menu['child'] ?? [], $groupId, $roles);
+                return $menu;
+            }, $menus);
         }
 
-        //echo '<script>console.log('.json_encode($menus_by_user_group).')</script>';
-        //exit();
-
-        return $menus_by_user_group;
+        return $result;
     }
 
-
-    public static function getByUserPermission($user_group_id)
+    public static function getByUserPermission($userGroupId)
     {
-        $user_group_menus = Cache::get('menu_user_group.' . $user_group_id) ?: [];
+        $menus = Cache::get('menu_user_group.' . (int) $userGroupId);
 
-        if ( empty($user_group_menus) ){
-            self::get();
-            $user_group_menus = Cache::get('menu_user_group.' . $user_group_id) ?: [];
+        if ( $menus === false ){
+            self::buildMenusCache();
+            $menus = Cache::get('menu_user_group.' . (int) $userGroupId);
         }
 
-        return $user_group_menus;
+        return $menus ?: [];
+    }
+
+    private static function filterForGroup(array $items, int $groupId, array $roles): array
+    {
+        $visible = [];
+
+        foreach( $items as $item ){
+            if ( $item['type'] === 'route' ){
+                if ( !in_array($item['permission'], $roles, true) ) continue;
+            } else {
+                // comparação exata do id (antes str_contains: o grupo 1 via itens dos grupos 10, 12...)
+                $allowed = array_map('intval', array_filter(explode(',', (string) ($item['user_groups'] ?? ''))));
+
+                if ( !in_array($groupId, $allowed, true) ) continue;
+            }
+
+            $item['child'] = self::filterForGroup($item['child'] ?? [], $groupId, $roles);
+
+            // grupo sem nenhum filho visível não aparece vazio no menu
+            if ( $item['type'] === 'group' && !$item['child'] ) continue;
+
+            $visible[] = $item;
+        }
+
+        return $visible;
+    }
+
+    private static function tree(array $byParent, int $parentId): array
+    {
+        $items = $byParent[$parentId] ?? [];
+
+        foreach( $items as $index => $item ){
+            $items[$index]['child'] = self::tree($byParent, (int) $item['id']);
+        }
+
+        return $items;
+    }
+
+    private static function prepareItem(array $item, array $paths): array
+    {
+        $item['id'] = (int) $item['id'];
+        $item['parent_id'] = (int) $item['parent_id'];
+        $item['menu_id'] = (int) $item['menu_id'];
+        $item['sort_order'] = (int) $item['sort_order'];
+
+        if ( $item['type'] === 'route' ){
+            $item['link'] = $paths[$item['permission']] ?? '';
+        }
+
+        $item['icon_name'] = MenuIcons::name($item['icon'] ?? '');
+        $item['icon_svg'] = MenuIcons::svg($item['icon'] ?? '');
+
+        return $item;
+    }
+
+    /** @return array<string, string> permissão da página => caminho */
+    private static function pathsByRole(): array
+    {
+        $paths = [];
+
+        foreach( (array) Roles::getList() as $role => $route ){
+            if ( isset($route['path']) ) $paths[$role] = $route['path'];
+        }
+
+        return $paths;
     }
 }

@@ -1,344 +1,197 @@
-import {MenuApi} from "api";
-import React, { useEffect, useState } from "react";
-import {useReqToast} from 'hooks';
-import {TemplateMain} from "components";
+import { useState } from "react";
 import { Button } from "react-bootstrap";
-import { HiOutlineTrash, HiMiniPlus, HiChevronDown, 
-    HiArrowTurnDownRight, HiOutlinePlusCircle, HiOutlinePencilSquare  } from "react-icons/hi2";
-import MenuFormOffCanvas from "./MenuFormOffCanvas";
-import MenuFormItemOffCanvas from "./MenuFormItemOffCanvas";
 import { ReactSortable } from "react-sortablejs";
-
-export default function Menu(){
-
-    const Toast = useReqToast();
-    const menuMaps = {};
-
-    const [menus, setMenus] = useState([]);
-    const [status, setStatus] = useState("processing");
-    const [menuOpen, setMenuOpen] = useState([]);
-
-    useEffect(() => {
-        Core.getMenus();
-    }, [])
-    
-
-    const Core = {
-
-        onRemoveMenuBtnClick: async (props) => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing");
-
-            let remove = await MenuApi.delete(props.id);
-
-
-            setStatus("ready");
-
-            if ( remove.error ) return Toast(remove);
-
-            Toast({
-                type: "success",
-                message: "Removido com succeso"
-            })
-
-            Core.getMenus();
-        },
-
-        onMenuHeaderClick: props => {
-            setMenuOpen(prev => {
-                prev = JSON.parse(JSON.stringify(prev));
-
-                if ( menuOpen.includes(props.id) ){
-                    prev = prev.filter(item => item !== props.id);
-                    return prev;
-                }
-
-                prev.push(props.id);
-
-                return prev;
-            })
-        },
-
-        onRemoveItemBtnClick: async (props) => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing")
-
-            let remove = await MenuApi.deleteItem(props.id);
-
-            setStatus("ready")
-
-
-            if ( remove.erro ) return Toast(remove)
-
-            Toast({
-                type: "success",
-                message: "Removido com succeso"
-            })
-
-            Core.getMenus()
-        },
-
-        setList: (props, list) => {
-            menuMaps[props.id] = list;
-        },
-
-        onEndSort: async (props, b, c) => {
-
-
-            let menuUpdated = menuMaps[props.id];
-            let menusCloned = JSON.parse(JSON.stringify(menus));
-            let idsToUpdate = [];
-
-            menuUpdated.forEach((item, index) => {
-                idsToUpdate.push({
-                    id: item.id,
-                    sort_order: index
-                })
-            })
-
-            Core.findDeep(menusCloned, props.id, (items, item) => {
-                item.child = menuUpdated;
-            })
-
-            setMenus(menusCloned);
-
-            let updateSort = await MenuApi.sort({
-                items: idsToUpdate
-            })
-
-
-            if ( updateSort.error ) return Toast(updateSort);
-        },
-
-        findDeep: (items, id, callback) => {
-
-            for( let i=0; i<items.length; i++ ){
-                let item = items[i];
-
-                if ( item.id === id ){
-                    callback(items, item);
-                    break;
-                }
-
-                if ( item.child.length ) Core.findDeep(item.child, id, callback);
-            }
-        },
-
-        getMenus: async () => {
-
-            let getMenus = await MenuApi.get();
-
-
-            setStatus('ready');
-    
-            if ( getMenus.error ) return Toast(getMenus);
-    
-            setMenus(getMenus.data);
-        },
-    }
-
-    const Menu = ({props, isLast, isOpen}) => {
-
-        return (
-            <div className={'border rounded mb-3' + (isLast ? "" : " border-bottom")}>
-                <div className="d-flex align-items-center justify-content-between p-3 pointer">
-                    <MenuFormOffCanvas config={{id: props.id, name: props.name}} onComplete={Core.getMenus}>
-                        <span className="fs-4 fw-semibold">
-                            {`${props.name} (${props.slug})`}
-                        </span>
-                    </MenuFormOffCanvas>
-                    <span className="fs-4 px-2 rounded-3 border shadow-sm" onClick={Core.onMenuHeaderClick.bind(this, props)}>
-                        <HiChevronDown />
-                    </span>
-                </div>
-                <div className={"border-top" + (isOpen ? '' : ' d-none')}>
-                    <div className="menu-content nested-sortable">
-                        <MenuItems props={props} />
-                    </div>
-                    <MenuFooter props={props} />
-                </div>
-            </div>
-        )
-    }
-
-    const MenuItems = ({props}) => {
-
-        let childs = props.child || [];
-        let childsLen = childs.length;
-
-        if ( !childsLen ) return <div className="p-4 text-center text-secondary bg-light">
-            Nenhum item cadastrado
-        </div>
-
-        return (
-            <ReactSortable group="first" animation={200} delayOnTouchStart={true} delay={2} 
-            list={childs} setList={Core.setList.bind(this, props)} onSort={Core.onEndSort.bind(this, props)}>
-                {
-                    childs.map((item, i) => {
-                        let isLast = (i === (childsLen - 1));
-
-                        return (
-                            <div 
-                                key={item.id}
-                                data-id={item.id}
-                                data-parent={item.parent_id}
-                                data-menu={item.menu_id}
-                                className={"menu-item-wrap"+(item.child.length ? ' has-child' : "")}>
-                                    <MenuItem props={item} isLast={isLast} />
-                                    {item.child.length ? <MenuChildItem props={item} margin={0} /> : ""}
-                            </div>
-                        )
-                    })
-                }
-            </ReactSortable>
-        )
-    }
-
-    const MenuItem = ({props, isLast, isChild=false, margin=0}) => {
-       // console.log("[MenuItem]", props)
-        return (
-            <div
-                data-id={props.id}
-                data-parent={props.parent_id}
-                data-menu={props.menu_id}
-                className={"menu-item"+(isChild ? "-child" : "")+" px-3 py-2 d-flex align-items-center"+(!isLast ? " border-bottom" : "")+(isChild ? ' bg-light' : '')}>
-                    {isChild && <span className="me-3" style={{
-                        width: "20px", 
-                        height: "13px", 
-                        marginLeft: margin, 
-                        marginTop: "-9px"
-                        }}><HiArrowTurnDownRight className="fs-5 text-secondary" />
-                    </span>}
-                    <span className="d-flex align-items-center justify-content-between w-100">
-                        <MenuFormItemOffCanvas config={props} onComplete={Core.getMenus}>
-                            <span className="pointer">
-                                {props.title}
-                            </span>
-                        </MenuFormItemOffCanvas>
-                        <span className="d-flex align-items">
-                            <span className="mx-3 m-1 text-danger pointer" onClick={Core.onRemoveItemBtnClick.bind(this, props)}>
-                                <HiOutlineTrash className="fs-5" />
-                            </span>
-                            <MenuFormItemOffCanvas config={{
-                                menu_id: props.menu_id,
-                                parent_id: props.id,
-                                sort_order: props.length
-                            }} onComplete={Core.getMenus}>
-                                <span className="m-1 text-primary pointer">
-                                    <HiOutlinePlusCircle className="fs-5" />
-                                </span>
-                            </MenuFormItemOffCanvas>
-                        </span>
-                    </span>
-            </div>
-        )
-    }
-
-    const MenuChildItem = ({props, margin=0}) => {
-
-        let child = props.child || [];
-        let childLen = child.length;
-
-       // console.log({props})
-
-        return (
-             <ReactSortable group="nested" animation={200} delayOnTouchStart={true} delay={2} 
-            list={child} setList={Core.setList.bind(this, props)} onSort={Core.onEndSort.bind(this, props)}>
-                {child.map((item, i) => {
-
-                    item.length = childLen +1;
-                    return (
-                        <div key={item.id}>
-                            <MenuItem props={item} margin={margin} isLast={false} isChild={true} />
-                            {item.child.length ? <MenuChildItem props={item} margin={(margin + 35)} /> : ""}
-                        </div>
-                    )
-                })}
-            </ReactSortable>
-        )
-    }
-
-    const MenuFooter = ({props}) => {
-
-        return (
-            <div className="px-2 py-1 d-flex align-items justify-content-between border-top">
-               
-                <MenuFormItemOffCanvas config={{
-                     parent_id: 0,
-                     menu_id: props.id || "",
-                     external: false,
-                     type: "route",
-                     sort_order: props.child.length 
-                         ? (props.child.length + 1)
-                         : 0
-                }} onComplete={Core.getMenus}>
-                    <Button variant="default" className="text-primary border-0">
-                        <HiMiniPlus />
-                        <span className="ms-2">Novo item</span>
-                    </Button>
-                </MenuFormItemOffCanvas>
-                <div>
-                    <Button variant="default" className="text-secondary border-0" onClick={Core.onRemoveMenuBtnClick.bind(this, props)}>
-                        <HiOutlineTrash />
-                        <span className="ms-1">Remover</span>
-                    </Button>
-                    
-                    <MenuFormOffCanvas config={{id: props.id, name: props.name}} onComplete={Core.getMenus}>
-                        <Button variant="default" className="text-priamry border-0" onClick={Core.show}>
-                            <HiOutlinePencilSquare />
-                            <span className="ms-1">Editar</span>
-                        </Button>
-                    </MenuFormOffCanvas>
-                </div>
-            </div>
-        )
-    }
-
-    const EmptyMenu = () => <div className="text-secondary fs-4 fw-light p-3">Nenhum menu cadastrado!</div>
-
-    const Header = () => {
-        return (
-            <div className="text-end">
-                <MenuFormOffCanvas onComplete={Core.getMenus}>
-                    <Button variant="primary" className="rounded-3 m-2" onClick={Core.show}>
-                        <HiMiniPlus className="fs-5" /> Novo menu
-                    </Button>
-                </MenuFormOffCanvas>    
-            </div>
-        )
-    }
-
-    const Content = () => {
-
-        let menuLen = menus.length;
-
-        if ( !menuLen && status === "processing" ) return;
-
-        if ( !menuLen ) return <EmptyMenu />;
-
-        return (
-            <div className="content w-md-50 mt-3">
-                {menus.map((item, index) => {
-
-                    let isLast = (index === (menuLen - 1));
-                    let isOpen = menuOpen.includes(item.id);
-
-                    return <Menu key={item.id} props={item} isLast={isLast} isOpen={isOpen} />
-                })}
-            </div>
-        )
-    }
+import {
+    HiOutlineTrash, HiMiniPlus, HiChevronDown, HiChevronUp, HiArrowTurnDownRight,
+    HiOutlinePlusCircle, HiOutlinePencilSquare, HiOutlineBars2,
+} from "react-icons/hi2";
+import { MenuApi } from "api";
+import { Empty, SvgIcon, TemplateMain } from "components";
+import { useAction, useApi } from "hooks";
+import MenuForm from "./MenuForm";
+import MenuItemForm from "./MenuItemForm";
+
+const TYPE_LABEL = { route: "Rota", group: "Grupo", external_link: "Link externo", text: "Texto" };
+
+/** Troca os filhos de um nível da árvore (sem mutar o estado). */
+function replaceChildren(items, parentId, children) {
+    return items.map((item) => (
+        item.id === parentId
+            ? { ...item, child: children }
+            : { ...item, child: replaceChildren(item.child || [], parentId, children) }
+    ));
+}
+
+/**
+ * Lista ordenável de um nível do menu. Só salva quando a ordem muda de fato
+ * (o react-sortablejs também chama setList sem mudança).
+ */
+function SortableLevel({ items, onSort, children, depth }) {
+    const ids = items.map((item) => item.id).join(",");
 
     return (
-        <TemplateMain title="Menus" breadcrumbs={['page.config']}>
-           <div className={`body${status === "processing" ? ' full-loading' : ""}`}>
-                <Header />
-                <Content />
-           </div>
+        <ReactSortable
+            list={items.map((item) => ({ ...item }))}
+            setList={(list) => {
+                if (list.map((item) => item.id).join(",") !== ids) onSort(list.map(({ chosen, selected, ...item }) => item));
+            }}
+            group={`level-${depth}`}
+            handle=".sortable-handle"
+            animation={200}
+            ghostClass="sortable-ghost"
+        >
+            {items.map(children)}
+        </ReactSortable>
+    );
+}
+
+function ItemRow({ item, depth, onEdit, onAdd, onRemove, onSort }) {
+    const children = item.child || [];
+
+    return (
+        <div>
+            <div className={`px-3 py-2 d-flex align-items-center border-bottom${depth ? " bg-light" : ""}`}>
+                <span className="sortable-handle text-secondary me-2" title="Arraste para ordenar"><HiOutlineBars2 /></span>
+                {depth > 0 && <HiArrowTurnDownRight className="text-secondary me-2" style={{ marginLeft: (depth - 1) * 28 }} />}
+                <span className="me-2 fs-5 d-inline-flex" style={{ width: 22 }}>{item.icon_svg && <SvgIcon icon={item.icon_svg} />}</span>
+                <button type="button" className="btn btn-link text-reset text-decoration-none p-0 text-start flex-grow-1" onClick={() => onEdit(item)}>
+                    {item.title}
+                    <span className="ms-2 fs-12 text-secondary">{TYPE_LABEL[item.type] || item.type}{item.link ? ` · ${item.link}` : ""}</span>
+                </button>
+                <button type="button" className="btn btn-link text-primary p-1" title="Adicionar subitem" onClick={() => onAdd(item)}>
+                    <HiOutlinePlusCircle className="fs-5" />
+                </button>
+                <button type="button" className="btn btn-link text-danger p-1" title="Remover" onClick={() => onRemove(item)}>
+                    <HiOutlineTrash className="fs-5" />
+                </button>
+            </div>
+            {children.length > 0 && (
+                <SortableLevel items={children} depth={depth + 1} onSort={(list) => onSort(item.id, list)}>
+                    {(child) => (
+                        <ItemRow key={child.id} item={child} depth={depth + 1} onEdit={onEdit} onAdd={onAdd} onRemove={onRemove} onSort={onSort} />
+                    )}
+                </SortableLevel>
+            )}
+        </div>
+    );
+}
+
+export default function Menu() {
+    const menus = useApi(() => MenuApi.get(), [], { initial: [] });
+    const options = useApi(() => MenuApi.getRolesData(), [], { initial: null });
+
+    const [openMenus, setOpenMenus] = useState([]);
+    const [editingMenu, setEditingMenu] = useState(null);
+    const [editingItem, setEditingItem] = useState(null);
+
+    const [removeMenu, removingMenu] = useAction((id) => MenuApi.delete(id), { confirm: "Remover o menu e todos os itens?", success: "Menu removido" });
+    // antes o erro era testado em "remove.erro" (erro de digitação): falhas apareciam como sucesso
+    const [removeItem, removingItem] = useAction((id) => MenuApi.deleteItem(id), { confirm: "Remover o item e os subitens?", success: "Item removido" });
+    const [saveSort] = useAction((items) => MenuApi.sort({ items }));
+
+    const toggleOpen = (id) => setOpenMenus((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+
+    const onSaved = () => {
+        setEditingMenu(null);
+        setEditingItem(null);
+        menus.reload();
+    };
+
+    const onSort = (menu) => (parentId, list) => {
+        menus.setData((all) => all.map((current) => {
+            if (current.id !== menu.id) return current;
+            return parentId === 0 ? { ...current, child: list } : { ...current, child: replaceChildren(current.child || [], parentId, list) };
+        }));
+
+        saveSort(list.map((item, index) => ({ id: item.id, sort_order: index })));
+    };
+
+    const onRemoveItem = async (item) => {
+        const res = await removeItem(item.id);
+        if (res && !res.error) menus.reload();
+    };
+
+    const onRemoveMenu = async (menu) => {
+        const res = await removeMenu(menu.id);
+        if (res && !res.error) menus.reload();
+    };
+
+    const list = menus.data || [];
+    const loading = menus.loading || removingMenu.loading || removingItem.loading;
+
+    return (
+        <TemplateMain
+            title="Menus"
+            breadcrumbs={["page.config"]}
+            actions={<Button variant="primary" className="m-1" onClick={() => setEditingMenu({})}><HiMiniPlus className="fs-5" /> Novo menu</Button>}
+        >
+            <div className={`w-md-75${loading ? " full-loading" : ""}`} style={loading && !list.length ? { minHeight: 120 } : undefined}>
+                {!list.length && !loading && <Empty message="Nenhum menu cadastrado" />}
+
+                {list.map((menu) => {
+                    const isOpen = openMenus.includes(menu.id);
+                    const items = menu.child || [];
+                    const addItem = (parent) => setEditingItem({
+                        menu_id: menu.id,
+                        parent_id: parent ? parent.id : 0,
+                        sort_order: (parent ? (parent.child || []).length : items.length),
+                    });
+
+                    return (
+                        <div key={menu.id} className="border rounded mb-3 bg-white">
+                            <button type="button" className="btn w-100 d-flex align-items-center justify-content-between p-3 text-start" onClick={() => toggleOpen(menu.id)} aria-expanded={isOpen}>
+                                <span className="fs-4 fw-semibold">{menu.name} <span className="fs-6 fw-normal text-secondary">({menu.slug})</span></span>
+                                {isOpen ? <HiChevronUp className="fs-4" /> : <HiChevronDown className="fs-4" />}
+                            </button>
+
+                            {isOpen && (
+                                <div className="border-top">
+                                    {items.length
+                                        ? (
+                                            <SortableLevel items={items} depth={0} onSort={(next) => onSort(menu)(0, next)}>
+                                                {(item) => (
+                                                    <ItemRow
+                                                        key={item.id}
+                                                        item={item}
+                                                        depth={0}
+                                                        onEdit={setEditingItem}
+                                                        onAdd={addItem}
+                                                        onRemove={onRemoveItem}
+                                                        onSort={onSort(menu)}
+                                                    />
+                                                )}
+                                            </SortableLevel>
+                                        )
+                                        : <div className="p-4 text-center text-secondary bg-light">Nenhum item cadastrado</div>}
+
+                                    <div className="px-2 py-1 d-flex align-items-center justify-content-between">
+                                        <Button variant="link" className="text-primary text-decoration-none" onClick={() => addItem(null)}>
+                                            <HiMiniPlus /> <span className="ms-1">Novo item</span>
+                                        </Button>
+                                        <div>
+                                            <Button variant="link" className="text-secondary text-decoration-none" onClick={() => onRemoveMenu(menu)}>
+                                                <HiOutlineTrash /> <span className="ms-1">Remover</span>
+                                            </Button>
+                                            <Button variant="link" className="text-primary text-decoration-none" onClick={() => setEditingMenu(menu)}>
+                                                <HiOutlinePencilSquare /> <span className="ms-1">Editar</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            <MenuForm menu={editingMenu} onClose={() => setEditingMenu(null)} onSaved={onSaved} />
+            <MenuItemForm
+                item={editingItem}
+                options={options.data}
+                loadingOptions={options.loading}
+                onClose={() => setEditingItem(null)}
+                onSaved={onSaved}
+            />
         </TemplateMain>
-    )
+    );
 }

@@ -1,11 +1,13 @@
 /vendor/
-#/.vscode
-#.vscode
+/.vscode/*
+!/.vscode/app.code-snippets
 .DS_Store
 .theia
-#.env
-#/storage/*
-#!/storage/builds
+.env
+/storage/*
+!/storage/builds
 node_modules
+# gerado pelo módulo Config/Visual a partir das cores salvas no banco
+/public/assets/css/theme.css
 #/app
 #/app-start

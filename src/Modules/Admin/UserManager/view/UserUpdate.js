@@ -1,4 +1,4 @@
-import MainTemplate from "ui/templates/main";
+import {TemplateMain} from "components";
 import UserForm from "./common/UserForm";
 import { Link } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";
@@ -21,9 +21,9 @@ export default function UserUpdate(){
     }
 
     return (
-        <MainTemplate title="Editar usuário" breadcrumbs={['page.admin', 'page.admin.user']}>
+        <TemplateMain title="Editar usuário" breadcrumbs={['page.admin', 'page.admin.user']}>
             <Header />
             <UserForm afterSave={() => navigate("/admin/user/")} id={id} />
-        </MainTemplate>
+        </TemplateMain>
     )
 }

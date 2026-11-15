@@ -1,7 +1,7 @@
 import LoginForm from "./LoginForm";
 import {LoginApi} from "api";
 import { useState, useEffect } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link, useSearchParams } from "react-router";
 import RecoveryMessage from "./recovery/RecoveryMessage";
 import App from "app";
@@ -15,12 +15,13 @@ export default function Login(props){
 
     const [status, setStatus] = useState("ready");
     const [password, setPassword] = useState("");
-    const [keep, setKeep] = useState(true);
+    // desmarcado por padrão, como a caixa aparece na tela (antes era true sem o usuário marcar)
+    const [keep, setKeep] = useState(false);
     const [user, setUser] = useState(email);
     const [validated, setValidated] = useState(false);
 
     useEffect(() => {
-        document.title = `Login | ${App.data("title", "Wep")}`
+        document.title = `Login | ${App.config("title", "Wep")}`
     }, [props.title]);
 
 
@@ -35,7 +36,8 @@ export default function Login(props){
         onInputChange: (e) => {
             const $input = e.target;
             const name = $input.name;
-            const value = $input.value;
+            // checkbox: o valor é "checked" (antes mandava sempre "on", mesmo desmarcado)
+            const value = $input.type === "checkbox" ? $input.checked : $input.value;
 
             Core.set[name](value);
         },
@@ -90,9 +92,6 @@ export default function Login(props){
                     </Link>
                     <div className="my-4 text-center">
                         <h1 className="mb-0 h2">Acesse sua conta</h1>
-                        <div className="text-secondary">
-                            Ainda não tem um conta? <Link to="/cadastro" className="text-decoration-none">Crie sua conta aqui</Link>
-                        </div>
                     </div>
                     {hasRecoveryMessage && <RecoveryMessage />}
                     <LoginForm

@@ -1,4 +1,4 @@
-import TemplateMain from "ui/templates/main";
+import {TemplateMain} from "components";
 import React from "react";
 import Cards from "./Cards";
 

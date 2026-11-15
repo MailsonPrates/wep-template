@@ -2,7 +2,7 @@
  
 namespace App\Modules\Admin\UserInvite;
  
-use App\Core\Model;
+use Wep\Model;
  
 /**
  * Classe model responsável por implementar métodos

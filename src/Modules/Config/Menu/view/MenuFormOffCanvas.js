@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import Name from "./Name";
 import { Form, Offcanvas, Button } from "react-bootstrap";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import {MenuApi} from "api";
 
 export default function MenuFormOffCanvas({config={}, children, onComplete}){
@@ -35,13 +35,11 @@ export default function MenuFormOffCanvas({config={}, children, onComplete}){
                 name
             }
 
-            console.log({payload});
 
             let save = isUpdate
-                ? await MenuApi.where("id", config.id).update(payload)
+                ? await MenuApi.update(config.id, payload)
                 : await MenuApi.create(payload);
 
-            console.log({save});
 
             setStatus("ready");
 

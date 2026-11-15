@@ -7,50 +7,58 @@ use DateTime;
 
 class ValidatePersistentLogin
 {
+    /**
+     * Valida o cookie "lembrar-me" e troca o token (rotação a cada uso).
+     *
+     * @return int|string|false user_id ou false
+     */
     public static function handle()
     {
-        if ( !isset($_COOKIE['remember_me']) ) return false;
+        $cookie = CreatePersistentLogin::readCookie();
 
-        list($selector, $token) = explode(':', $_COOKIE['remember_me']);
-        
+        if ( !$cookie ){
+            // cookie malformado (antes gerava warning no explode)
+            if ( isset($_COOKIE[CreatePersistentLogin::COOKIE]) ) CreatePersistentLogin::forgetCookie();
+
+            return false;
+        }
+
+        [$selector, $token] = $cookie;
+
         $getSession = LoginPersistent::get([
             'where' => [
                 ['selector', '=', $selector]
-            ]
+            ],
+            'limit' => 1
         ]);
 
-        if ( $getSession->error ) return false;
+        $session = $getSession->data[0] ?? null;
 
-        $session = $getSession->data[0] ?? [];
+        if ( $getSession->error || !$session ) return self::reject();
 
-        if ( !isset($session['expires_at']) ) return false;
-
-        /**
-         * Verifica expiração
-         */
         $is_on_time = new DateTime() < new DateTime($session['expires_at']);
-
-        if ( !$is_on_time ) return false;
-
-        /**
-         * Valida tpken
-         */
         $is_valid_token = hash_equals($session['token_hash'], hash('sha256', $token));
 
-        if ( !$is_valid_token ) return;
+        if ( !$is_on_time || !$is_valid_token ){
 
+            // selector certo com token errado: o cookie pode ter sido copiado; invalida o registro
+            LoginPersistent::delete([
+                'where' => [['id', '=', $session['id']]]
+            ]);
+
+            return self::reject();
+        }
 
         /**
-         * Atualiza banco de dados e cookie
+         * Rotação: novo selector e token a cada uso
          */
         $token = bin2hex(random_bytes(32));
         $selector = bin2hex(random_bytes(16));
-        $token_hash = hash('sha256', $token);
 
         $update = LoginPersistent::update([
           'fields' => [
             'selector' => $selector,
-            'token_hash' => $token_hash
+            'token_hash' => hash('sha256', $token)
           ],
           'where' => [
             ['id', '=', $session['id']]
@@ -59,8 +67,14 @@ class ValidatePersistentLogin
 
         if ( $update->error ) return false;
 
-        CreatePersistentLogin::setCookie($selector, $token);
+        CreatePersistentLogin::setCookie($selector . ':' . $token, (new DateTime($session['expires_at']))->getTimestamp());
 
         return $session['user_id'];
+    }
+
+    private static function reject(): bool
+    {
+        CreatePersistentLogin::forgetCookie();
+        return false;
     }
 }

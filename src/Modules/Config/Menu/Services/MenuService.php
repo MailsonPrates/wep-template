@@ -2,8 +2,8 @@
 
 namespace App\Modules\Config\Menu\Services;
 
-use App\Core\Cache;
-use App\Core\DB;
+use Wep\Cache;
+use Wep\DB;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Menu;
 use App\Modules\User\User;
@@ -24,9 +24,12 @@ class MenuService
         return $menus;
     }
 
-    public static function create($data)
+    /**
+     * @param array $fields colunas do menu (já validadas)
+     */
+    public static function create(array $fields)
     {
-        $create = Menu::create($data);
+        $create = Menu::create(['fields' => $fields]);
 
         if ( !$create->error ){
             self::buildMenusCache();
@@ -36,9 +39,9 @@ class MenuService
         return $create;
     }
 
-    public static function update($data)
+    public static function update($id, array $fields)
     {
-        $update = Menu::update($data);
+        $update = Menu::updateById($id, $fields);
 
         if ( !$update->error ){
             self::buildMenusCache();
@@ -48,20 +51,20 @@ class MenuService
         return $update;
     }
 
-    public static function delete($props)
+    public static function delete($id)
     {
         // Deleta menu items
         $childTable = DB::table('menu_items');
 
         $deleteItems = $childTable->delete([
             'where' => [
-                ['menu_id', '=', $props['where'][0][2]]
+                ['menu_id', '=', $id]
             ]
         ]);
 
         if ( $deleteItems->error ) return $deleteItems;
 
-        $deleteMenu = Menu::delete($props);
+        $deleteMenu = Menu::deleteById($id);
 
         if ( $deleteMenu->error ) return $deleteMenu;
 

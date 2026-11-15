@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Offcanvas, Button } from "react-bootstrap";
 import {MenuApi, UserGroupApi} from "api";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import Title from "./Title";
 import Type from "./Type";
 import Route from "./Route";
@@ -65,13 +65,11 @@ export default function MenuFormItemOffCanvas({config={}, children, onComplete})
 
             setStatus("processing");
 
-            console.log({payload, isUpdate});
 
             let save = isUpdate
-                ? await MenuApi.where("id", config.id).updateItem(payload)
+                ? await MenuApi.updateItem(config.id, payload)
                 : await MenuApi.createItem(payload);
 
-            console.log({save});
 
             setStatus("ready");
 
@@ -103,7 +101,6 @@ export default function MenuFormItemOffCanvas({config={}, children, onComplete})
     
             setStatus("ready");
     
-            console.log({getRolesData});
     
             if ( getRolesData.error ) return Toast(getRolesData)
     

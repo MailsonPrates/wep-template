@@ -2,8 +2,8 @@
  
 namespace App\Modules\User;
 
-use App\Core\Controller;
-use App\Core\Response;
+use Wep\Controller;
+use Wep\Response;
 
 /**
  * Classe controller responsável por implementar métodos

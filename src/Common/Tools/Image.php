@@ -2,7 +2,7 @@
 
 namespace App\Common\Tools;
 
-use App\Core\Str;
+use Wep\Str;
 
 class Image {
 	private $file;
@@ -349,7 +349,12 @@ class Image {
 
 		$dir_image = DIR_ASSETS . '/images';
 
-		if (!is_file($dir_image. $filename) || substr(str_replace('\\', '/', realpath($dir_image. $filename)), 0, strlen($dir_image)) != str_replace('\\', '/', $dir_image)) {
+		// o arquivo precisa estar DENTRO de assets/images: o prefixo é comparado com "/" no fim
+		// (antes "assets/images_outra/..." também passava)
+		$base = rtrim(str_replace('\\', '/', (string) realpath($dir_image)), '/') . '/';
+		$real = str_replace('\\', '/', (string) realpath($dir_image . $filename));
+
+		if (!$filename || !is_file($dir_image . $filename) || $base === '/' || !str_starts_with($real, $base)) {
 			return;
 		}
 
@@ -365,17 +370,8 @@ class Image {
 				return $dir_image . $image_old;
 			}
  
-			$path = '';
-
-			$directories = explode('/', dirname($image_new));
-
-			foreach ($directories as $directory) {
-				$path = $path . '/' . $directory;
-
-				if (!is_dir($dir_image . $path)) {
-					@mkdir($dir_image . $path, 0777);
-				}
-			}
+			// sem permissão de escrita para todos (antes 0777)
+			\Wep\File::ensureDir(dirname($dir_image . $image_new));
 
 			if ($width_orig != $width || $height_orig != $height) {
 				$image = new self($dir_image . $image_old);

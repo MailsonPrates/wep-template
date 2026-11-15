@@ -1,16 +1,14 @@
 import {UserInviteApi} from "api";
-import App from "app";
-import Password from "ui/Password";
+import {normalizeString, $} from "helpers";
+import {Password, TemplateClean} from "components";
 import React, { useEffect, useState } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Col, Row, Form, Button } from "react-bootstrap";
 import Firstname from "./form/Firstname";
 import Lastname from "./form/Lastname";
 import Username from "./form/Username";
-import TemplateClean from "ui/templates/clean";
 import { HiOutlineExclamationTriangle } from "react-icons/hi2";
 import { useNavigate, useParams } from "react-router";
-import $ from "app/ref";
 
 export default function UserInviteSignup(){
     
@@ -57,13 +55,11 @@ export default function UserInviteSignup(){
                 token
             }
 
-            console.log({payload});
 
             setStatus("processing");
 
             let registerUser = await UserInviteApi.registerUser(payload);
 
-            console.log({registerUser});
 
         
             if ( registerUser.error ) {
@@ -98,7 +94,7 @@ export default function UserInviteSignup(){
 
             setValidated(false);
 
-            let value = App.normalizeString(e.target.value || "");
+            let value = normalizeString(e.target.value || "");
             value = value.trim();
             value = value.split(" ").join(".");
             
@@ -134,7 +130,6 @@ export default function UserInviteSignup(){
 
                 if ( !inputTypes.includes(tag) || !isRequired ) continue;
                 if ( value ){
-                    console.log({$elem, showInvalid})
                     /*showInvalid && */$elem.classList.remove("is-invalid")
                     continue;
                 }
@@ -160,13 +155,11 @@ export default function UserInviteSignup(){
             let isMissing = (!pass || !confirmPass);
 
             if ( isMissing ) {
-                console.log({isMissing})
                 setIsValidPasswords(null);
                 return null;
             }
 
             if ( isEqual ) {
-                console.log({isEqual, pass, confirmPass})
                 setIsValidPasswords(true)
                 return true;
             }
@@ -178,7 +171,6 @@ export default function UserInviteSignup(){
 
         validateUsername: async () => {
 
-            console.log("Validanting...");
 
             setValidated(false);
 
@@ -189,13 +181,11 @@ export default function UserInviteSignup(){
 
             if ( usernameCheckStatus === "checking" ) return;
 
-            console.log("Checking...");
 
             setUsernameCheckStatus("checking")
 
             let response = await UserInviteApi.validateUsername({username})
 
-            console.log({response});
 
             if ( response.error ) {
                 setUsernameCheckStatus("invalid")
@@ -215,7 +205,6 @@ export default function UserInviteSignup(){
         validateInvite: async () => {
             let validateInvite = await UserInviteApi.validate({token});
     
-            console.log({validateInvite});
     
             if ( validateInvite.error ) {
                 setStatus("error");

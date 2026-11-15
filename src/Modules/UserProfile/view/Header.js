@@ -1,5 +1,5 @@
 import React, { createRef } from "react"
-import isMobile from "core/is-mobile";
+import {isMobile} from "helpers";
 
 const imageSizeByDevice = isMobile() ? 80 : 200;
 const imageSizeStyle = {height: imageSizeByDevice, width: imageSizeByDevice};

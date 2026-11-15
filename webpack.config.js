@@ -1,7 +1,5 @@
 const path = require('path');
 const webpack = require('webpack');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const WatchModuleConfigPlugin = require("./webpack/watch-module-config-plugin");
 const CollectInjectedAssetsPlugin = require("./webpack/collect-injected-assets-plugin");
 
@@ -11,14 +9,14 @@ module.exports = (env, argv) => {
   return {
     mode: isProd ? 'production' : 'development',
     watch: !isProd, // só assistir em dev
-    watchOptions: { ignored: "/node_modules/" },
+    watchOptions: { ignored: /node_modules/ },
 
-    entry: path.resolve(__dirname, 'src/Common/view/app/root.js'),
+    entry: path.resolve(__dirname, 'src/app/root.js'),
 
     output: {
       filename: isProd ? "[name].[contenthash].js" : "[name].js",
       path: path.resolve(__dirname, "public/assets/view/"),
-      clean: true, // limpa a pasta automaticamente no Webpack 5
+      clean: true, // limpa a pasta a cada build
     },
 
     optimization: {
@@ -59,21 +57,7 @@ module.exports = (env, argv) => {
 
     plugins: [
       ...(isProd ? [] : [new WatchModuleConfigPlugin()]), // só em dev
-      new CleanWebpackPlugin(),
-      new HtmlWebpackPlugin({
-        minify: isProd && {
-          collapseWhitespace: true,
-          removeComments: true,
-          removeRedundantAttributes: true,
-          useShortDoctype: true,
-          removeEmptyAttributes: true,
-          removeStyleLinkTypeAttributes: true,
-          keepClosingSlash: true,
-          minifyJS: true,
-          minifyCSS: true,
-          minifyURLs: true,
-        },
-      }),
+      // gera storage/builds/view-assets.build.php, que o template PHP (Main.php) injeta na página
       new CollectInjectedAssetsPlugin(),
       new webpack.ProvidePlugin({
         React: 'react'
@@ -84,12 +68,16 @@ module.exports = (env, argv) => {
       extensions: ['.js', '.jsx'],
       alias: {
         bs: path.resolve(__dirname, 'node_modules/react-bootstrap/'),
-        ui: path.resolve(__dirname, 'src/Common/view/ui/'),
-        app: path.resolve(__dirname, 'src/Common/view/app/'),
+        app: path.resolve(__dirname, 'src/app/'),
+        core: path.resolve(__dirname, 'src/app/core/'),
+        components: path.resolve(__dirname, 'src/app/components/'),
+        hooks: path.resolve(__dirname, 'src/app/hooks/'),
+        helpers: path.resolve(__dirname, 'src/app/helpers/'),
+        contexts: path.resolve(__dirname, 'src/app/contexts/'),
+        services: path.resolve(__dirname, 'src/app/services/'),
         modules: path.resolve(__dirname, 'src/Modules/'),
         storage: path.resolve(__dirname, 'storage/'),
         "route-maps": path.resolve(__dirname, "storage/builds/route-maps.build.js"),
-        core: path.resolve(__dirname, 'src/Common/view/app/core/'),
         api: path.resolve(__dirname, 'storage/builds/apis/'),
       }
     }

@@ -1,12 +1,12 @@
 import {LoginApi} from "api";
 import React from "react";
 import { useState, useEffect } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link, useParams, useNavigate } from "react-router";
 import RecoveryForm from "./RecoveryForm";
 import App from "app";
 import { BsInfoCircle } from "react-icons/bs";
-import $ from "app/ref";
+import {$} from "helpers";
 
 export default function RecoveryUpdate(config){
 
@@ -25,25 +25,22 @@ export default function RecoveryUpdate(config){
     }, []);
 
     useEffect(() => {
-        document.title = `Criar nova senha | ${App.data("title", "Wep")}`
+        document.title = `Criar nova senha | ${App.config("title", "Wep")}`
     }, [config.title]);
 
     const Core = {
         onChange: e => {
             let name = e.target.name;
             let value = e.target.value;
-            console.log("onChange", {name, value});
 
             if ( name == "password" ) setPassword(value);
             if ( name == "confirmPassword" ) setConfirmPassword(value);
         },
 
         handleSubmit: async () => {
-            console.log("handle submit")
 
             if ( !Core.validatePassword() ) return;
 
-            console.log("aqui");
 
             setStatus("processing");
 
@@ -52,7 +49,6 @@ export default function RecoveryUpdate(config){
                 code
             });
 
-            console.log({submit})
 
             if ( submit.error ){
                 setStatus('ready');
@@ -80,7 +76,6 @@ export default function RecoveryUpdate(config){
             let isEqual = (pass === confirmPass);
             let isMissing = (!pass || !confirmPass);
 
-            console.log({isEqual, pass, confirmPass})
 
             if ( isMissing ) {
                 setIsValidPasswords(null);
@@ -108,7 +103,6 @@ export default function RecoveryUpdate(config){
                 code
             });
 
-            console.log({validateCode})
 
             if ( validateCode.error ){
                 setErrorMessage(validateCode.message);

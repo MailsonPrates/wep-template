@@ -1,11 +1,9 @@
-import React from "react";
-import MainTemplate from "ui/templates/main";
+import {TemplateMain, Empty} from "components";
 import {UserManagerApi} from "api";
-import Empty from "ui/Empty";
-import App from "app";
+import {params} from "helpers";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
 
 export default function User(){
@@ -20,7 +18,7 @@ export default function User(){
     useEffect(() => {
 
         if ( hasSaveParam ){
-            App.params.remove("save");
+            params.remove("save");
             
             Toast({
                 state: "success",
@@ -31,7 +29,6 @@ export default function User(){
         UserManagerApi.get()
             .then(function(response){
 
-                console.log({response});
 
                 if ( response.error ) return Toast(response)
 
@@ -49,9 +46,7 @@ export default function User(){
 
             setStatus('processing');
 
-            UserManagerApi.delete({
-                user_id
-            })
+            UserManagerApi.delete(user_id)
                 .then(response => {
 
                     setStatus('ready');
@@ -78,7 +73,6 @@ export default function User(){
                 user_id
             });
 
-            console.log({resetPassword})
 
             setStatus("ready");
 
@@ -161,11 +155,11 @@ export default function User(){
     }
 
     return (
-        <MainTemplate title="Usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Usuários" breadcrumbs={['page.admin']}>
             <Header />
             <div className={`mt-2${status === "processing" ? ' full-loading' : ''}`}>
                 <DataList />
             </div>
-        </MainTemplate>
+        </TemplateMain>
     )
 }

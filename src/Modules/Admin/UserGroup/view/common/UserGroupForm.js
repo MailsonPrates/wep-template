@@ -4,7 +4,7 @@ import Name from "./Name";
 import BtnSave from "./BtnSave";
 import RoleGroup from "./RoleGroup";
 import {UserGroupApi} from "api";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Link } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";
 
@@ -25,7 +25,6 @@ export default function UserGroupForm({config={}, afterSave}){
         .getRoles()
         .then(response => {
         
-            console.log({response});
 
             if ( response.error ) return Toast(response);
 
@@ -36,14 +35,13 @@ export default function UserGroupForm({config={}, afterSave}){
         if ( !isUpdate ) return;
         
         UserGroupApi
-        .where("user_group_id", config.id)
-        .get()
+        .get(config.id)
         .then(response => {
            //console.log({response});
 
             if ( response.error ) return Toast(response);
 
-            let item = response.data[0] || {};
+            let item = response.data || {};
             let roles = item.roles 
                 ? item.roles.split(",")
                 : []
@@ -71,18 +69,15 @@ export default function UserGroupForm({config={}, afterSave}){
 
             setStatus("processing");
 
-            console.log({roles});
 
             let save = isUpdate 
                 ? UserGroupApi
-                    .where("user_group_id", config.id)
-                    .update({
+                    .update(config.id, {
                         name,
                         roles: roles.join(",")
                     })
                 : UserGroupApi.create({
                     name,
-                    id: config.id,
                     roles: roles.join(",")
                 })
 
@@ -166,7 +161,6 @@ export default function UserGroupForm({config={}, afterSave}){
             let methodRole = method.role;
             let isSelected = rolesSelected.includes(methodRole);
 
-            console.log({method, page, rolesSelected, methodRole, isSelected});
 
             if ( isSelected ){
                 rolesSelected = rolesSelected.filter(role => role !== methodRole);
@@ -200,7 +194,6 @@ export default function UserGroupForm({config={}, afterSave}){
                 rolesSelected.push(page.role);
             }
 
-             console.log({rolesSelected})
 
             setRoles(rolesSelected);
         },

@@ -1,0 +1,44 @@
+import React, {useEffect, useState} from "react";
+import App from "app";
+import { Row, Col } from "react-bootstrap";
+import Breadcrumbs from "./Breadcrumbs";
+import Nav from "./Nav";
+import Sidebar from "./Sidebar";
+import "./main.scss";
+import SidebarMobile from "./SidebarMobile";
+
+const TemplateMain = ({title="Sem título", children, header, breadcrumbs}) => {
+
+    useEffect(() => {
+        document.title = `${title} | ${App.config("title", "Wep")}`
+    }, [title]);
+
+    const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+
+    const hasSidebar = true;
+
+    return (
+        <div className="main">
+            <Nav toggleSidebarMobile={() => setShowSidebarMobile(value => !value)} />
+            <div className="container-fluid">
+                <Row>
+                    <Sidebar />
+                    <SidebarMobile show={showSidebarMobile} close={() => setShowSidebarMobile(false)} />
+                    <Col className={`p-3 h-100${hasSidebar ? ' ms-md-5' : ''}`} sm={hasSidebar ? "9" : "12"}>
+                    {header !== false && 
+                        <TemplateMain.Header>
+                            <TemplateMain.Title>{title}</TemplateMain.Title>
+                            {breadcrumbs !== false && <Breadcrumbs list={breadcrumbs} />}
+                        </TemplateMain.Header>}
+                        <div className="main-content mt-4 bg-white rounded-3 p-md-3">{children}</div>
+                    </Col>
+                </Row>
+            </div>
+        </div>
+    );
+}
+
+TemplateMain.Title = ({children}) => <h1 className="fw-light">{children || "Sem título"}</h1>;
+TemplateMain.Header = ({children}) => <div className="page-header">{children}</div>;
+
+export default TemplateMain;

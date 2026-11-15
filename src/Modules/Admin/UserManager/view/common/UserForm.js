@@ -1,8 +1,8 @@
 import {UserManagerApi, UserGroupApi} from "api";
-import App from "app";
-import Password from "ui/Password";
+import {normalizeString} from "helpers";
+import {Password} from "components";
 import React, { useEffect, useRef, useState } from "react";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import { Col, Row, Form, Button } from "react-bootstrap";
 import Firstname from "./Firstname";
 import Lastname from "./Lastname";
@@ -40,11 +40,9 @@ export default function UserForm(config={}){
         
         const onMount = async () => {
 
-            console.log("[Mount]")
 
             let getUserGroups = await UserGroupApi.get();
 
-            console.log({getUserGroups, config});
 
             if ( getUserGroups.error ){
                 setPageStatus("ready");
@@ -58,11 +56,8 @@ export default function UserForm(config={}){
                 return;
             }
 
-            let getUser = await UserManagerApi.get({
-                user_id: config.id
-            });
+            let getUser = await UserManagerApi.get(config.id);
 
-            console.log({getUser});
 
             if ( getUser.error ) return Toast(getUser);
 
@@ -123,7 +118,6 @@ export default function UserForm(config={}){
 
             setPageStatus("processing");
 
-            console.log({payload})
 
             let saveUser = await UserManagerApi.save(payload);
 
@@ -133,7 +127,9 @@ export default function UserForm(config={}){
 
             temporario && !isUpdate && Toast({
                 type: "success",
-                message: `Cadastrado com sucesso! <br>Senha temporária: <b>mudar123</b>`
+                // a senha temporária é gerada no servidor e mostrada uma única vez
+                message: `Cadastrado com sucesso! ${saveUser.message ?? ""}`,
+                autoHide: false
             })
 
             typeof config.afterSave && config.afterSave(saveUser);
@@ -148,7 +144,7 @@ export default function UserForm(config={}){
         },
 
         onUsernameChange: e => {
-            let value = App.normalizeString(e.target.value);
+            let value = normalizeString(e.target.value);
             value = value.trim();
             value = value.split(" ").join(".");
             setUsername(value);

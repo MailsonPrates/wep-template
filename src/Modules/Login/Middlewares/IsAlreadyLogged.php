@@ -1,11 +1,12 @@
 <?php
-    
-namespace App\Modules\Login\Middlewares;
-    
-use App\Core\Http\iMiddleware;
-use App\Core\Session;
 
-class IsAlreadyLogged implements iMiddleware
+namespace App\Modules\Login\Middlewares;
+
+use App\Modules\Login\Services\Auth;
+use Wep\Http\Middleware;
+use Wep\Session;
+
+class IsAlreadyLogged implements Middleware
 {
     /**
     * @param Request $request
@@ -14,9 +15,10 @@ class IsAlreadyLogged implements iMiddleware
     public function handle($request, $next)
     {
         Session::start();
-        
+
         if ( Session::get("user_id") ){
-            header('Location: ' . Session::get("uri", "/"));
+            // só caminhos internos (antes aceitaria "//site-externo")
+            header('Location: ' . Auth::intendedUrl());
             die();
         }
 

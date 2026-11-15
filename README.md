@@ -23,3 +23,20 @@ apachectl configtest
 systemctl restart apache2
 ou 
 service apache2 restart
+### Front (React)
+
+```
+npm ci            # instala as versões exatas do package-lock.json
+npm run dev       # build de desenvolvimento + watch (roda "php app update" quando um config/module.php muda)
+npm run prod      # build de produção (public/assets/view)
+```
+
+O `php app update` precisa rodar antes do primeiro build: ele gera em `storage/builds` as rotas e as APIs
+que o front importa. O build gera `storage/builds/view-assets.build.php` (só os scripts do entrypoint;
+as telas são carregadas sob demanda).
+
+Imports por alias: `app`, `core`, `components`, `hooks`, `helpers`, `contexts`, `modules`, `api`, `route-maps`.
+
+Chamadas à API (`App.request` e as APIs geradas, ex.: `UserApi.get(id)`) sempre resolvem com o corpo da
+resposta: trate com `if (res.error) ...`. Sessão expirada (401) leva ao login e volta à página depois;
+sem permissão (403) volta como `{error: true, http_code: 403, message}`.

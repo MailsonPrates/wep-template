@@ -1,7 +1,6 @@
-import MainTemplate from "ui/templates/main";
+import {TemplateMain, Empty} from "components";
 import {UserInviteApi} from "api";
-import Empty from "ui/Empty";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import React, { useEffect, useState } from "react";
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
 import { Link, useLocation } from "react-router";
@@ -32,7 +31,7 @@ export default function UserInvite(){
 
             setStatus("processing");
 
-            UserInviteApi.delete("user_invite_id", id)
+            UserInviteApi.delete(id)
                 .then(response => {
 
                     setStatus("ready");
@@ -56,8 +55,7 @@ export default function UserInvite(){
             setStatus("processing");
 
             let update = await UserInviteApi
-                .where("user_invite_id", id)
-                .update("status", "cancelled");
+                .update(id, {status: "cancelled"});
             
             setStatus("ready");
 
@@ -97,7 +95,6 @@ export default function UserInvite(){
             UserInviteApi.get()
             .then(function(response){
 
-                console.log({response});
 
                 if ( response.error ) return Toast(response);
 
@@ -201,9 +198,9 @@ export default function UserInvite(){
     }
 
     return (
-        <MainTemplate title="Convites de usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Convites de usuários" breadcrumbs={['page.admin']}>
             <Header />
             <DataList />
-        </MainTemplate>
+        </TemplateMain>
     )
 }

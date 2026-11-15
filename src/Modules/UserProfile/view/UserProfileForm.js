@@ -1,6 +1,6 @@
 import {UserProfileApi} from "api";
 import App from "app";
-import useReqToast from 'ui/useReqToast';
+import {useReqToast} from 'hooks';
 import React, { useEffect, useRef, useState } from "react";
 import Header from "./Header";
 import Firstname from "./Firstname";
@@ -8,10 +8,10 @@ import Lastname from "./Lastname";
 import Email from "./Email";
 import Nickname from "./Nickname";
 import Type from "./Type";
-import Password from "ui/Password";
+import {Password} from "components";
 import Username from "./Username";
 import { Button, Col, Row, Form } from "react-bootstrap";
-import $ from "app/ref";
+import {$, params} from "helpers";
 import SectionHeader from "./SectionHeader";
 
 let hasChangedImage = false;
@@ -35,14 +35,14 @@ export default function UserProfileForm({config}){
     const [formValidated, setFormValidated] = useState(true)
 
     useEffect(() => {
-        if ( App.params.get("save") ){
+        if ( params.get("save") ){
 
             Toast({
                 type: "success",
                 message: "Salvo com succeso"
             })
 
-            App.params.remove("save");
+            params.remove("save");
         }
     }, [])
 
@@ -68,7 +68,6 @@ export default function UserProfileForm({config}){
                 profile_image: image
             };
 
-            console.log({payload})
 
             setStatus("processing");
 
@@ -78,7 +77,6 @@ export default function UserProfileForm({config}){
                 var fd = new FormData();
                 var files = imageRef.current.files[0];
 
-                console.log({files});
 
                 fd.append('file', files);
                 fd.append('firstname', firstname);
@@ -94,14 +92,12 @@ export default function UserProfileForm({config}){
                     processData: false,
                 }).salvar();
 
-                console.log("[update]", {saveProfile})
 
             } else {
 
                 saveProfile = await UserProfileApi.salvar(payload);
             }
 
-            console.log({saveProfile});
 
             setPassword("");
             setConfirmPassword("");
@@ -112,7 +108,7 @@ export default function UserProfileForm({config}){
                 return
             }
 
-            App.params.set("save", true);
+            params.set("save", true);
 
             let url = window.location.href.split('?&').join("?");
 
@@ -124,7 +120,6 @@ export default function UserProfileForm({config}){
             var file = e.target.files[0];
             var preview = URL.createObjectURL(file);
 
-            console.log({file, preview})
 
             setImage(preview)
             hasChangedImage = true;
@@ -146,12 +141,10 @@ export default function UserProfileForm({config}){
             let isMissing = (!pass || !confirmPass);
             let isEmpty = !pass && !confirmPass;
 
-            console.log({pass, confirmPass})
 
             if ( isEmpty ) return true;
 
             if ( isMissing ) {
-                console.log({isMissing})
                 setIsValidPasswords(null);
                 return null;
             }
@@ -179,7 +172,6 @@ export default function UserProfileForm({config}){
             const isAllFilled = Core.validateFilling(e);
             const isValidPass = Core.validatePassword()
             const isFormValidated = isAllFilled && isValidPass;
-            console.log({isFormValidated, isAllFilled, isValidPass})
             setFormValidated(isFormValidated);
         },
 
@@ -203,7 +195,6 @@ export default function UserProfileForm({config}){
                 if ( !inputTypes.includes(tag) || !isRequired ) continue;
 
                 if ( value ){
-                    console.log({$elem, showInvalid})
                     $elem.classList.remove("is-invalid")
                     continue;
                 }

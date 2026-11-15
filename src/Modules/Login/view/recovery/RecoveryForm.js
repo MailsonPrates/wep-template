@@ -1,7 +1,7 @@
 import React from 'react';
 import Form from 'react-bootstrap/Form';
 import { Button } from 'react-bootstrap';
-import Password from "ui/Password";
+import {Password} from "components";
 
 export default function RecoveryForm({props}){
 

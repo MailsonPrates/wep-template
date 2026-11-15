@@ -6,12 +6,23 @@ use App\Modules\User\User;
 
 class SaveUser
 {
+    public const MIN_PASSWORD_LENGTH = 8;
 
+    /**
+     * @throws \Exception senha curta, username ou e-mail inválidos/duplicados
+     */
     public static function handle($data=[])
     {
         $data['user_id'] = $data['user_id'] ?? '';
         $is_update = isset($data['user_id']) && $data['user_id'] ? $data['user_id'] : false;
         $is_no_email_flux = false;
+
+        $password = (string) ($data['password'] ?? '');
+
+        // no update a senha é opcional (vazia = mantém a atual)
+        if ( ($password !== '' || !$is_update) && mb_strlen($password) < self::MIN_PASSWORD_LENGTH ){
+            throw new \Exception("A senha precisa ter pelo menos " . self::MIN_PASSWORD_LENGTH . " caracteres");
+        }
 
         if ( isset($data['no_email']) ){
             $is_no_email_flux = $data['no_email'];

@@ -3,7 +3,7 @@ import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
 import { Button } from 'react-bootstrap';
 import { Link } from 'react-router';
-import Password from "ui/Password";
+import {Password} from "components";
 
 export default function LoginForm(props={}){
 
@@ -42,7 +42,7 @@ export default function LoginForm(props={}){
             </div>
             <div className='mt-3'>
                <Form.Check type="checkbox" className='d-flex justify-content-center'>
-                    <Form.Check.Input type="checkbox" className='border-2' name="keep" onChange={props.onInputChange} />
+                    <Form.Check.Input type="checkbox" className='border-2' name="keep" checked={!!props.keep} onChange={props.onInputChange} />
                     <Form.Check.Label className='ms-2'>Mantenha conectado</Form.Check.Label>
                 </Form.Check>
             </div>

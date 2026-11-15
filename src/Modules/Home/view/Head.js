@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router";
 import App from "app";
 
-const user = App.data("user") || {};
+const user = App.config("user") || {};
 
 export default function Head(){
     return (

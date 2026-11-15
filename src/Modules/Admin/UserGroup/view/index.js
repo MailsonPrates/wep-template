@@ -1,9 +1,8 @@
 
-import React, { useEffect, useState, useLoca } from "react";
-import MainTemplate from "ui/templates/main";
-import useReqToast from 'ui/useReqToast';
+import React, { useEffect, useState } from "react";
+import {TemplateMain, Empty} from "components";
+import {useReqToast} from 'hooks';
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
-import Empty from "ui/Empty";
 import {UserGroupApi} from "api";
 import { Link, useLocation } from "react-router";
 
@@ -33,7 +32,7 @@ export default function UserGroup(){
 
             setStatus("processing");
 
-            UserGroupApi.delete("user_group_id", id)
+            UserGroupApi.delete(id)
                 .then(response => {
 
                     setStatus("ready");
@@ -50,11 +49,9 @@ export default function UserGroup(){
         },
 
         getGroups: () => UserGroupApi
-        .orderBy("user_group_id", "DESC")
         .get()
         .then(function(response){
 
-            console.log({response})
 
             if ( response.error ) return Toast(response);
 
@@ -106,9 +103,9 @@ export default function UserGroup(){
     }
 
      return (
-        <MainTemplate title="Grupos de usuários" breadcrumbs={['page.admin']}>
+        <TemplateMain title="Grupos de usuários" breadcrumbs={['page.admin']}>
             <Header />
             <DataList />
-        </MainTemplate>
+        </TemplateMain>
     )
 }

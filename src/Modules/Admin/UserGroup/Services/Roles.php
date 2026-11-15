@@ -2,10 +2,10 @@
 
 namespace App\Modules\Admin\UserGroup\Services;
 
-use App\Core\Cache;
-use App\Core\Engine\Module;
-use App\Core\File;
-use App\Core\Str;
+use Wep\Cache;
+use Wep\Engine\Module;
+use Wep\File;
+use Wep\Str;
 use App\Modules\Admin\UserGroup\UserGroup;
 
 class Roles 

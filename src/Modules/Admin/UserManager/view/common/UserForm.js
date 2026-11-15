@@ -131,7 +131,9 @@ export default function UserForm(config={}){
 
             temporario && !isUpdate && Toast({
                 type: "success",
-                message: `Cadastrado com sucesso! <br>Senha temporária: <b>mudar123</b>`
+                // a senha temporária é gerada no servidor e mostrada uma única vez
+                message: `Cadastrado com sucesso! ${saveUser.message ?? ""}`,
+                autoHide: false
             })
 
             typeof config.afterSave && config.afterSave(saveUser);

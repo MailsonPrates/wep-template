@@ -106,7 +106,7 @@ class UserService
             if ( $save->error || !$code ) return $save;
 
             return Response::success([], [
-                "message" => "Senha temporária (válida por 72h, mostrada só agora):<br><b>" . htmlspecialchars($password) . "</b>"
+                "message" => "Senha temporária (válida por 72h, mostrada só agora): " . $password
             ]);
 
         } catch (\Throwable $th) {
@@ -177,7 +177,7 @@ class UserService
             if ( $save->error ) return $save;
 
             return Response::success([], [
-                "message" => "Senha temporária (válida por 72h, mostrada só agora):<br><b>" . htmlspecialchars($password) . "</b>"
+                "message" => "Senha temporária (válida por 72h, mostrada só agora): " . $password
             ]);
 
         } catch (\Throwable $th) {

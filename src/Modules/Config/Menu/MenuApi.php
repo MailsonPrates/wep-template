@@ -107,11 +107,31 @@ class MenuApi
             return $response->json(Response::error($e->getMessage()));
         }
 
+        // o link vira href no menu de todos os usuários: só caminho interno ou http(s)
+        // (bloqueia "javascript:", "data:" e afins)
+        if ( isset($payload['fields']['link']) && !self::isSafeLink((string) $payload['fields']['link']) ){
+            return $response->json(Response::error("Link inválido: use um caminho interno (/pagina) ou um endereço http(s)://"));
+        }
+
         return $response->json(match ($operation) {
             'create' => MenuItemService::create($payload['fields']),
             'update' => MenuItemService::update($payload['id'], $payload['fields']),
             'delete' => MenuItemService::delete($payload['id']),
         });
+    }
+
+    private static function isSafeLink(string $link): bool
+    {
+        $link = trim($link);
+
+        if ( $link === '' ) return true;
+
+        if ( preg_match('/[\x00-\x1F]/', $link) ) return false;
+
+        // caminho interno: "/pagina" (não "//outro-site")
+        if ( $link[0] === '/' ) return !str_starts_with($link, '//') && !str_contains($link, '\\');
+
+        return (bool) preg_match('~^https?://[^\s/]+~i', $link) && filter_var($link, FILTER_VALIDATE_URL);
     }
 
     /**

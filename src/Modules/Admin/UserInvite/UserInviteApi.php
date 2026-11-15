@@ -9,6 +9,7 @@ use App\Modules\User\Services\SaveUser;
 use App\Modules\User\Services\Username;
 use App\Modules\Admin\UserInvite\Services\UserInviteService;
 use Wep\Api\InvalidPayloadException;
+use Wep\Security\RateLimiter;
 
 /**
  * Classe controller responsável por implementar métodos
@@ -45,125 +46,77 @@ class UserInviteApi
         return $response->json($getUserInvite);
     }
  
-    public function validate($request, $response, $userInvite)
+    /**
+     * Rotas públicas (cadastro do convidado): limite de tentativas por IP.
+     */
+    private const PUBLIC_MAX_ATTEMPTS = 30;
+    private const PUBLIC_DECAY = 900;
+
+    public function validate($request, $response, $userInvite = null)
     {
-        $token = $request->token ?? null;
+        if ( $limited = self::rateLimited($request, 'invite-validate') ) return $response->json($limited);
 
-        if ( !$token ) return $response->json(Response::error("Convite inválido"));
+        [$invite, $error] = self::pendingInvite((string) ($request->token ?? ''));
 
-        try {
-            
-            /**
-             * Busca convite
-             */
-            $getInvite = $userInvite::get([
-                'where' => [
-                    ['token', '=', $token]
-                ]
-            ]);
-
-            if ( $getInvite->error ) return $response->json($getInvite);
-
-            $invite = $getInvite->data ?? [];
-
-            if ( count($invite) === 0 ) return $response->json(Response::error("Convite não encontrado"));
-
-            $invite = $invite[0];
-
-            /**
-             * Verifica status
-             */
-            $status = $invite['status'];
-           
-            if ( $status != "pending" ){
-
-                $status_message = [
-                    'cancelled' => 'Convite cancelado',
-                    'used' => 'Convite já foi utilizado',
-                    'expired' => 'Convite expirado!'
-                ];
-
-                $message = $status_message[$status];
-
-                return $response->json(Response::error($message));
-            }
-
-            /**
-             * Verifica expiração
-             */
-            $expire_at = new \DateTime($invite['expire_at']);
-            $now = new \DateTime("now");
-            $is_expired = $expire_at < $now;
-
-            if ( $is_expired ) return $response->json(Response::error('Convite expirou!'));
-
-
-            return $response->json(Response::success());
-
-
-        } catch (\Throwable $th) {
-            return $response->json(Response::error($th->getMessage()));
-        }
+        return $response->json($error ? Response::error($error) : Response::success());
     }
 
-    public function registerUser($request, $response, $userInvite)
+    /**
+     * Cadastro pelo convite. O convite é reservado (pending → used) de forma atômica ANTES de
+     * criar o usuário: duas requisições simultâneas com o mesmo token não criam duas contas.
+     * Antes não havia verificação de status nem de validade (token usado/expirado criava contas)
+     * e o cadastro gravava a coluna "active", que não existe.
+     */
+    public function registerUser($request, $response, $userInvite = null)
     {
-        $data = $request->data();
-        $token = $request->token;
+        if ( $limited = self::rateLimited($request, 'invite-register') ) return $response->json($limited);
+
+        $token = (string) ($request->token ?? '');
+
+        [$invite, $error] = self::pendingInvite($token);
+
+        if ( $error ) return $response->json(Response::error($error));
+
+        $claim = UserInvite::update([
+            'fields' => ['status' => 'used'],
+            'where' => [
+                ['token', '=', $token],
+                ['status', '=', 'pending']
+            ]
+        ]);
+
+        if ( $claim->error || (int) ($claim->affected_rows ?? 0) !== 1 ){
+            return $response->json(Response::error("Convite já foi utilizado"));
+        }
 
         try {
 
-            /**
-             * Busca convite
-             */
-            $getInvite = $userInvite::get([
-                'where' => [
-                    ['token', '=', $token]
-                ]
-            ]);
-
-            if ( $getInvite->error ) return $response->json($getInvite);
-
-            $invite = $getInvite->data ?? [];
-
-            if ( count($invite) === 0 ) return $response->json(Response::error("Convite não encontrado"));
-
-            $invite = $invite[0];
-            
             $registerUser = SaveUser::handle([
-                'username' => $data['username'] ?? "",
+                'username' => (string) ($request->username ?? ""),
                 'email' => $invite['email'] ?? "",
                 'user_group_id' => $invite['user_group_id'] ?? "",
-                'firstname' => $data['firstname'] ?? "",
-                'lastname' => $data['lastname'] ?? "",
-                'password' => $data['password'] ?? "",
-                'active' => 1
+                'firstname' => (string) ($request->firstname ?? ""),
+                'lastname' => (string) ($request->lastname ?? ""),
+                'password' => (string) ($request->password ?? ""),
+                'status' => 'ativado'
             ]);
 
-            if ( !$registerUser->error ){
-
-                /**
-                 * Altera status do convite
-                 */
-                $userInvite::update([
-                    'fields' => [
-                        'status' => 'used'
-                    ],
-                    'where' => [
-                        ['token', '=', $token]
-                    ]
-                ]);
-            }
-            
-            return $response->json($registerUser);
-
         } catch (\Throwable $th) {
-            return $response->json(Response::error($th->getMessage()));
+            $registerUser = Response::error($th->getMessage());
         }
+
+        // falhou (ex.: username em uso, senha curta): devolve o convite para nova tentativa
+        if ( $registerUser->error ){
+            UserInvite::updateById($invite['user_invite_id'], ['status' => 'pending']);
+        }
+
+        return $response->json($registerUser);
     }
 
     public function validateUsername($request, $response)
     {
+        if ( $limited = self::rateLimited($request, 'invite-username') ) return $response->json($limited);
+
         $username = $request->username ?? "";
 
         try {
@@ -174,6 +127,55 @@ class UserInviteApi
         } catch (\Throwable $th) {
             return $response->json(Response::error($th->getMessage()));
        }
+    }
+
+    /**
+     * Convite pendente e dentro da validade.
+     *
+     * @return array{0: array|null, 1: string|null} [convite, mensagem de erro]
+     */
+    private static function pendingInvite(string $token): array
+    {
+        if ( !preg_match('/^[a-f0-9]{20,128}$/', $token) ) return [null, "Convite inválido"];
+
+        $getInvite = UserInvite::get([
+            'where' => [
+                ['token', '=', $token]
+            ],
+            'limit' => 1
+        ]);
+
+        $invite = $getInvite->data[0] ?? null;
+
+        if ( $getInvite->error || !$invite ) return [null, "Convite não encontrado"];
+
+        if ( $invite['status'] !== 'pending' ){
+            $messages = [
+                'cancelled' => 'Convite cancelado',
+                'used' => 'Convite já foi utilizado',
+                'expired' => 'Convite expirado!'
+            ];
+
+            return [null, $messages[$invite['status']] ?? 'Convite inválido'];
+        }
+
+        if ( new \DateTime($invite['expire_at']) < new \DateTime('now') ) return [null, 'Convite expirou!'];
+
+        return [$invite, null];
+    }
+
+    private static function rateLimited($request, string $action)
+    {
+        $limiter = RateLimiter::make();
+        $key = "$action:" . $request->ip();
+
+        if ( $limiter->tooManyAttempts($key, self::PUBLIC_MAX_ATTEMPTS) ){
+            return Response::error("Muitas tentativas. Tente novamente mais tarde.", ['http_code' => 429]);
+        }
+
+        $limiter->hit($key, self::PUBLIC_DECAY);
+
+        return null;
     }
 
     public function create($request, $response)

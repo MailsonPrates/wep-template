@@ -3,22 +3,27 @@
 namespace App\Modules\LoginPersistent\Services;
 
 use App\Modules\LoginPersistent\LoginPersistent;
-use DateTime;
 
 class DestroyPersistentLogin
 {
+    /**
+     * Apaga o registro do "lembrar-me" e o cookie.
+     * (Antes o cookie era "apagado" com o domínio example.com e continuava no navegador.)
+     */
     public static function handle()
     {
-        if ( !isset($_COOKIE['remember_me']) ) return;
+        $cookie = CreatePersistentLogin::readCookie();
 
-        list($selector, $token) = explode(':', $_COOKIE['remember_me']);
-        
-        LoginPersistent::delete([
-            'where' => [
-                ['selector', '=', $selector]
-            ]
-        ]);
+        if ( $cookie ){
+            LoginPersistent::delete([
+                'where' => [
+                    ['selector', '=', $cookie[0]]
+                ]
+            ]);
+        }
 
-        setcookie('remember_me', '', time() - 3600, '/', 'example.com', true, true);
+        if ( isset($_COOKIE[CreatePersistentLogin::COOKIE]) ){
+            CreatePersistentLogin::forgetCookie();
+        }
     }
 }

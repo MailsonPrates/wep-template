@@ -33,33 +33,34 @@ return [
                 'path' => '/create',
                 'view' => 'UserInviteCreate',
             ],
+            /**
+             * Cadastro do convidado: público (quem recebe o convite ainda não tem conta).
+             * Antes exigia login, então o cadastro por convite não funcionava. A proteção é o
+             * token do convite (validado em cada chamada) e o limite de tentativas por IP.
+             */
             [
                 'path' => '/signup/{token}',
                 'view' => 'UserInviteSignup',
-                'label' => 'Cadastro'
+                'label' => 'Cadastro',
+                'use_middlewares' => ['-isLogged', '-checkPermission']
             ],
             [
                 'path' => '/validate',
                 'method' => 'validate',
-                'label' => 'validar'
+                'label' => 'validar',
+                'use_middlewares' => ['-isLogged', '-checkPermission']
             ],
             [
                 'path' => '/register',
                 'method' => 'registerUser',
-                'label' => 'registrar'
-                /**
-                 * @todo precisa verificar se está na página certa
-                 * se o request veio da página certa, adicionar um token fisico local
-                 */
+                'label' => 'registrar',
+                'use_middlewares' => ['-isLogged', '-checkPermission']
             ],
             [
                 'path' => '/validate/username',
                 'method' => 'validateUsername',
-                'label' => 'validar username'
-                /**
-                 * @todo precisa verificar se está na página certa
-                 * se o request veio da página certa, adicionar um token fisico local
-                 */
+                'label' => 'validar username',
+                'use_middlewares' => ['-isLogged', '-checkPermission']
             ]
         ]
     ]

@@ -97,8 +97,9 @@ class Start
         Console::log('info', 'Atualizando npm...');
         if (passthru('npm install') === false) exit();
         
-        Console::log('info', 'Atualizando app...');
-        if (passthru('php app update') === false) exit();
+        // instalação: .env, schema do banco, build e usuário admin (pergunta os dados no terminal)
+        Console::log('info', 'Instalando app...');
+        if (passthru('php app install') === false) exit();
 
         echo "\n";
         Console::log('success', 'App inicializado com sucesso!');

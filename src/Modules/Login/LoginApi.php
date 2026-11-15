@@ -1,133 +1,86 @@
 <?php
- 
+
 namespace App\Modules\Login;
- 
-use App\Core\Controller;
-use App\Core\Response;
-use App\Core\Session;
+
+use App\Modules\Login\Services\Auth;
 use App\Modules\Login\Services\RecoveryEmail;
-use App\Modules\User\Services\SaveUser;
-use App\Modules\User\User;
 use App\Modules\LoginPersistent\Services\CreatePersistentLogin;
+use App\Modules\User\Services\SaveUser;
+use App\Modules\User\Services\UserService;
+use App\Modules\User\User;
+use Wep\Controller;
+use Wep\Response;
+use Wep\Security\RateLimiter;
+use Wep\Security\Token;
 
 /**
- * Classe controller responsável por implementar métodos
- * que lidam com as requisições vindas do front
+ * Login, recuperação de senha e troca da senha temporária.
+ *
+ * - limite de tentativas: 5 por usuário+IP e 30 por IP, a cada 15 minutos;
+ * - o ID da sessão é trocado no login (session fixation);
+ * - usuário com senha temporária (status "mudar_senha") não entra: é levado para criar a senha;
+ * - tokens de recuperação ficam no banco só como hash, com validade (Wep\Security\Token).
  */
 class LoginApi
 {
     use Controller;
- 
+
+    private const MAX_ATTEMPTS_USER = 5;
+    private const MAX_ATTEMPTS_IP = 30;
+    private const DECAY = 900;
+
     public function login($request, $response)
     {
-        $username = $request->username;
-        $password = $request->password;
-        $keep = $request->keep ?? false;
+        $username = trim((string) ($request->username ?? ''));
+        $password = (string) ($request->password ?? '');
+        $keep = filter_var($request->keep ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        /**
-         * Busca dados do usuário
-         */
-        $getUser = User::get([
-            'where' => [
-                ['username', '=', $username],
-                ['status', 'in', ['ativado', 'mudar_senha']]
-            ]
-        ]);
+        $limiter = RateLimiter::make();
+        $userKey = 'login:' . mb_strtolower($username) . '|' . $request->ip();
+        $ipKey = 'login-ip:' . $request->ip();
 
-        if ( $getUser->error ) return $response->json($getUser);
-
-        $user_data = $getUser->data ?? [];
-        $user_counter = count($user_data);
-
-        if ( $user_counter > 1 || $user_counter === 0 ) return $response->json(Response::error("Usuário ou senha incorretos"));
-
-        $user = $user_data[0];
-
-        /**
-         * Valida senha
-         */
-        $password_match = password_verify($password, $user['password']);
-
-        if ( !$password_match ) return $response->json(Response::error("Usuário ou senha incorretos"));
-
-        /**
-         * Remove code se houver
-         */
-        $user_code = $user['code'] ?? "";
-
-        if ( $user_code ){
-            User::update([
-                'fields' => [
-                    'code' => ""
-                ],
-                'where' => [
-                    ['user_id', '=', $user['user_id']]
-                ]
-            ]);
+        if ( $limiter->tooManyAttempts($userKey, self::MAX_ATTEMPTS_USER) || $limiter->tooManyAttempts($ipKey, self::MAX_ATTEMPTS_IP) ){
+            $minutes = (int) ceil(max($limiter->availableIn($userKey), $limiter->availableIn($ipKey)) / 60);
+            return $response->json(Response::error("Muitas tentativas. Tente novamente em $minutes minuto(s).", ['http_code' => 429]));
         }
 
-        
+        $user = Auth::findActiveByUsername($username);
+
+        // compara mesmo quando o usuário não existe: o tempo de resposta não revela usuários válidos
+        $password_match = password_verify($password, $user['password'] ?? Auth::DUMMY_HASH);
+
+        if ( !$user || !$password_match ){
+            $limiter->hit($userKey, self::DECAY);
+            $limiter->hit($ipKey, self::DECAY);
+
+            return $response->json(Response::error("Usuário ou senha incorretos"));
+        }
+
+        $limiter->clear($userKey);
+
         /**
-         * Adiciona dados do usuário na sessão
+         * Senha temporária: não abre sessão; o usuário cria a própria senha primeiro.
+         * (Antes a sessão já ficava logada e, no 2º login, a conta era ativada sem trocar a senha.)
          */
-        Session::start();
-        Session::set('user_id', $user['user_id']);
-        Session::set('user_group_id', $user['user_group_id']);
-
-        $uri_to_redirect = Session::get("uri", "/");
-
-        /**
-         * Adiciona code quando o usuário 
-         * foi cadastrado com senha temporária
-         */
-
         if ( $user['status'] == 'mudar_senha' ){
 
-            // Atualiza status do usuário
-            // quando senha temporaria já foi atualizada
-            if ( $user['code'] ){
-
-                User::update([
-                    'fields' => [
-                        'status' => 'ativado'
-                    ],
-                    'where' => [
-                        ['user_id', '=', $user['user_id']]
-                    ]
-                ]);
-
-                Session::set('user_code', "");
-
-                return $response->json(Response::success([], [
-                    'redirect' => "/"
-                ]));
+            if ( Token::isExpired($user['code'] ?? '') ){
+                return $response->json(Response::error("A senha temporária expirou. Peça ao administrador para gerar uma nova."));
             }
 
-            // Incluir usuário ao fluxo de redefinir a senha
+            $token = Token::generate();
 
-            $code = random_bytes(20);
-            $code = bin2hex($code);
-
-            User::update([
-                'fields' => [
-                    'code' => $code
-                ],
-                'where' => [
-                    ['user_id', '=', $user['user_id']]
-                ]
+            User::updateById($user['user_id'], [
+                'code' => Token::seal($token, UserService::RECOVERY_TTL)
             ]);
 
-            Session::set('user_code', $code);
-
             return $response->json(Response::success([], [
-                'redirect' => '/login/recovery/update/'.$code
+                'redirect' => '/login/recovery/update/' . $token
             ]));
-
         }
 
-        /**
-         * Lida com login persistente
-         */
+        Auth::login($user);
+
         if ( $keep ){
 
             $createSession = CreatePersistentLogin::handle([
@@ -136,59 +89,47 @@ class LoginApi
 
             if ( $createSession->error ) return $response->json($createSession);
         }
-        
+
         return $response->json(Response::success([], [
-            'redirect' => $uri_to_redirect
+            'redirect' => Auth::intendedUrl()
         ]));
     }
 
     public function recovery($request, $response)
     {
-        $email = $request->email ?? "";
+        $email = trim((string) ($request->email ?? ""));
+
+        $limiter = RateLimiter::make();
+        $key = 'recovery:' . $request->ip();
+
+        // a resposta é sempre a mesma (não revela se o e-mail existe)
+        if ( $limiter->tooManyAttempts($key, self::MAX_ATTEMPTS_USER) ) return $response->json(Response::success());
+
+        $limiter->hit($key, self::DECAY);
+
+        if ( !$email ) return $response->json(Response::success());
 
         try {
 
-            /**
-             * Busca dados do usuário
-             */
             $getUser = User::get([
                 'where' => [
                     ['email', '=', $email]
-                ]
+                ],
+                'limit' => 1
             ]);
 
-            if ( $getUser->error ) return $response->json(Response::error("Houve um erro, tente novamente"));
+            $user = $getUser->data[0] ?? null;
 
-            $userData = $getUser->data ?? [];
-            $user_not_exist = count($userData) === 0;
-            
-            if ( $user_not_exist ) return $response->json(Response::success());
+            if ( $getUser->error || !$user ) return $response->json(Response::success());
 
-            $user = $userData[0];
-            
-            /**
-             * Gera code
-             */
-            $token = random_bytes(20);
-            $token = bin2hex($token);
+            $token = Token::generate();
 
-            /**
-             * Salva code no usuário
-             */
-            $updateUser = User::update([
-                'fields' => [
-                    'code' => $token
-                ],
-                'where' => [
-                    ['user_id', '=', $user['user_id']]
-                ]
+            $updateUser = User::updateById($user['user_id'], [
+                'code' => Token::seal($token, UserService::RECOVERY_TTL)
             ]);
 
             if ( $updateUser->error ) return $response->json(Response::error("Houve um erro, tente novamente"));
 
-            /**
-             * Envia e-mail de redefinição
-             */
             RecoveryEmail::send([
                 'token' => $token,
                 'email' => $user['email'],
@@ -198,44 +139,25 @@ class LoginApi
             return $response->json(Response::success());
 
         } catch (\Throwable $th) {
-            
             return $response->json(Response::success());
         }
-        
     }
 
     public function handleUpdatePassword($request, $response)
     {
-        $password = $request->password ?? "";
-        $code = $request->code ?? "";
+        $password = (string) ($request->password ?? "");
+        $code = (string) ($request->code ?? "");
 
         if ( !$password || !$code ) return $response->json(Response::error("Dados inválidos"));
-        
-        /**
-         * Busca dados do usuário
-         */
-        $getUser = User::get([
-            'where' => [
-                ['code', '=', $code]
-            ]
-        ]);
 
-        $userData = $getUser->data ?? [];
-        $code_not_found = count($userData) === 0;
+        $user = Auth::findByToken($code);
 
-        if ( $code_not_found ) return $response->json(Response::error("Expirado! Solicite a recuperação da senha novamente"));
+        if ( !$user ) return $response->json(Response::error("Expirado! Solicite a recuperação da senha novamente"));
 
-        $user = $userData[0];
-
-        /**
-         * Atualiza senha
-         */
         try {
 
-            $is_no_email_flux = $user['email'] ? false : true;
-
-            SaveUser::handle([
-                'no_email' => $is_no_email_flux,
+            $save = SaveUser::handle([
+                'no_email' => !$user['email'],
                 'user_id' => $user['user_id'],
                 'username' => $user['username'],
                 'email' => $user['email'] ?? '',
@@ -247,34 +169,20 @@ class LoginApi
                 'status' => 'ativado'
             ]);
 
-            return $response->json(Response::success());
+            return $response->json($save);
 
         } catch (\Throwable $th) {
             return $response->json(Response::error($th->getMessage()));
         }
-
-        return $response->json($getUser);
     }
 
     public function validateRecoveryCode($request, $response)
     {
-        $code = $request->code ?? "";
+        $code = (string) ($request->code ?? "");
 
         if ( !$code ) return $response->json(Response::error("Dados inválidos"));
-        
-        /**
-         * Busca dados do usuário
-         */
-        $getUser = User::get([
-            'where' => [
-                ['code', '=', $code]
-            ]
-        ]);
 
-        $userData = $getUser->data ?? [];
-        $code_not_found = count($userData) === 0;
-
-        if ( $code_not_found ) return $response->json(Response::error("Token expirado ou não existe!"));
+        if ( !Auth::findByToken($code) ) return $response->json(Response::error("Token expirado ou não existe!"));
 
         return $response->json(Response::success());
     }

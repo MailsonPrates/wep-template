@@ -16,7 +16,8 @@ return [
     'api' => [
         'primary_key' => 'user_group_id',
         'order_by' => ['user_group_id', 'DESC'],
-        'fillable' => ['name', 'roles'],
+        // home_role: página inicial do grupo (validada no UserGroupApi)
+        'fillable' => ['name', 'roles', 'home_role'],
     ],
     'middlewares' => [],
     'constants' => [],

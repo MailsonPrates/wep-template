@@ -2,6 +2,7 @@
 
 namespace App\Modules\Login\Services;
 
+use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\User\User;
 use Wep\Security\Token;
 use Wep\Session;
@@ -73,14 +74,29 @@ class Auth
     }
 
     /**
-     * Para onde ir depois do login: a página que o usuário tentou acessar, se for um caminho
-     * interno. "//site.com" e "https://..." não são aceitos (open redirect).
+     * Para onde ir depois do login: a página que o usuário tentou acessar (se for um caminho
+     * interno; "//site.com" e "https://..." não são aceitos: open redirect) ou a página inicial do
+     * grupo dele (Admin > Grupo de usuários > Rota inicial).
      */
-    public static function intendedUrl(string $default = '/'): string
+    public static function intendedUrl(?string $default = null): string
     {
         $uri = (string) Session::get('uri', '');
 
-        return self::isSafePath($uri) ? $uri : $default;
+        // usada uma vez: o próximo login não volta para uma página antiga
+        Session::forget('uri');
+
+        // "/" (abriu o site pela raiz) não é uma página pretendida: vai para a inicial do grupo
+        if ( self::isSafePath($uri) && $uri !== '/' && !str_starts_with($uri, '/login') ) return $uri;
+
+        return $default ?? self::homePath();
+    }
+
+    /** Página inicial do grupo do usuário logado. */
+    public static function homePath(): string
+    {
+        $group = Roles::getRolesByUserGroup((int) Session::get('user_group_id'));
+
+        return Roles::homePath($group['home_role'] ?? Roles::DEFAULT_HOME_ROLE);
     }
 
     public static function isSafePath(string $path): bool

@@ -19,12 +19,55 @@ class Roles
         return self::buildRoles();
     }
 
+    public const DEFAULT_HOME_ROLE = 'page.home';
+
+    private static ?array $list = null;
+
+    /**
+     * Páginas por permissão: ["page.admin.user" => ["title" => ..., "path" => "/admin/user/"]].
+     * Gerado no `php app update` (hook CreatePathByRoleMap).
+     */
     public static function getList()
     {
-        $file = new File(DIR_BUILDS . '/route-maps.build.json');
-        $routes = $file->read(true);
+        if ( self::$list !== null ) return self::$list;
 
-        return $routes;
+        $routes = (new File(DIR_BUILDS . '/route-maps.build.json'))->read(true);
+
+        return self::$list = is_array($routes) ? $routes : [];
+    }
+
+    /** Limpa o mapa em memória (depois de regerar o route-maps.build.json). */
+    public static function flushList(): void
+    {
+        self::$list = null;
+    }
+
+    /**
+     * Caminho da página inicial do grupo; "/" quando a permissão não é uma página válida.
+     */
+    public static function homePath($role): string
+    {
+        $path = self::getList()[(string) $role]['path'] ?? '';
+
+        return $path !== '' && !str_contains($path, '{') ? $path : '/';
+    }
+
+    /**
+     * A permissão pode ser a página inicial do grupo? Precisa ser uma página sem parâmetros e estar
+     * entre as permissões do grupo (a Home é sempre aceita).
+     *
+     * @param string[] $groupRoles
+     */
+    public static function isValidHomeRole(string $role, array $groupRoles): bool
+    {
+        if ( $role === self::DEFAULT_HOME_ROLE ) return true;
+
+        $path = self::getList()[$role]['path'] ?? '';
+
+        return str_starts_with($role, 'page.')
+            && $path !== ''
+            && !str_contains($path, '{')
+            && in_array($role, $groupRoles, true);
     }
 
     public static function convertPathToRole($path)
@@ -221,6 +264,7 @@ class Roles
             $roles = self::buildRolesByUserGroupCache();
         }
 
-        return $roles[$user_group_id] ?? $roles ?? [];
+        // grupo inexistente: nenhum dado (antes devolvia o mapa de TODOS os grupos)
+        return $roles[$user_group_id] ?? [];
     }
 }

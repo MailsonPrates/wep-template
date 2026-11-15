@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS `user_group` (
     `user_group_id` int(11) NOT NULL AUTO_INCREMENT,
     `name` varchar(255) NOT NULL,
     `roles` text NOT NULL,
+    -- página para onde o usuário do grupo vai depois do login (permissão da página)
+    `home_role` varchar(100) NOT NULL DEFAULT 'page.home',
     PRIMARY KEY (`user_group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -71,4 +73,11 @@ CREATE TABLE IF NOT EXISTS `menu_items` (
     `sort_order` int(11) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     KEY `menu_items_menu` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Configurações do app em chave/valor (ex.: cores e logo do módulo Config > Visual)
+CREATE TABLE IF NOT EXISTS `setting` (
+    `name` varchar(60) NOT NULL,
+    `value` text NOT NULL,
+    PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

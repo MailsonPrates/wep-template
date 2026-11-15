@@ -10,11 +10,21 @@ const fs = require('fs');
  * injetados, então cada página baixava o JS de todas as telas.)
  */
 class CollectInjectedAssetsPlugin {
+  /**
+   * @param {{exclude?: string[]}} options entrypoints que não vão para a página (ex.: "styles",
+   *   cujo CSS é carregado à parte pelo Main.php e cujo JS é vazio)
+   */
+  constructor(options = {}) {
+    this.exclude = options.exclude || [];
+  }
+
   apply(compiler) {
     compiler.hooks.afterEmit.tap('CollectInjectedAssetsPlugin', (compilation) => {
       const files = [];
 
-      for (const entrypoint of compilation.entrypoints.values()) {
+      for (const [name, entrypoint] of compilation.entrypoints) {
+        if (this.exclude.includes(name)) continue;
+
         for (const file of entrypoint.getFiles()) {
           if (!files.includes(file)) files.push(file);
         }

@@ -1,5 +1,12 @@
-import App from "app";
-import {getType} from "helpers";
+import { request } from "./request";
+
+/** "string" | "number" | "object" (objeto simples) | "array" | ... */
+const getType = (value) => {
+    if (value === null) return "null";
+    if (Array.isArray(value)) return "array";
+    if (typeof value === "object") return Object.getPrototypeOf(value) === Object.prototype ? "object" : "instance";
+    return typeof value;
+};
 
 /**
  * Api factory: transforma o mapa de rotas de um módulo (gerado pelo `php app update`)
@@ -138,7 +145,7 @@ function apiFactory(routes, config = {}) {
                     state.requestOptions = {};
 
                     if ( config.vendor ){
-                        return App.request(buildRequest(route, args[0] ?? {}, options));
+                        return request(buildRequest(route, args[0] ?? {}, options));
                     }
 
                     // rotas customizadas podem se comportar como método de banco (custom.method)
@@ -149,10 +156,10 @@ function apiFactory(routes, config = {}) {
 
                         if ( data.error ) return failure(data.error);
 
-                        return App.request(buildRequest(route, data, options));
+                        return request(buildRequest(route, data, options));
                     }
 
-                    return App.request(buildRequest(route, args[0] ?? {}, options));
+                    return request(buildRequest(route, args[0] ?? {}, options));
                 };
             }
         };

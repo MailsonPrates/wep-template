@@ -1,0 +1,37 @@
+// Nav principal: cores vêm do tema (Config > Visual)
+.main-nav {
+    background-color: var(--app-nav-bg) !important;
+    color: var(--app-nav-color);
+
+    .nav-user,
+    .nav-icon,
+    .nav-menu-btn { color: var(--app-nav-color); }
+
+    .nav-icon:hover,
+    .nav-user:hover { color: var(--app-nav-link-hover); }
+}
+
+.brand-logo {
+    display: block;
+    max-width: 140px;
+    max-height: 60px;
+    width: auto;
+    height: auto;
+
+    &-sm { max-height: 45px; max-width: 120px; }
+}
+
+.nav-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: $white center / cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: $gray-700;
+}
+
+.dropdown-item:active a { color: $white !important; }

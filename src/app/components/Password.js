@@ -1,42 +1,36 @@
-import React, { useState } from "react";
-import FloatingLabel from 'react-bootstrap/FloatingLabel';
-import Form from 'react-bootstrap/Form';
-import { HiOutlineEye, HiOutlineEyeSlash  } from "react-icons/hi2";
+import { useState } from "react";
+import { FloatingLabel, Form } from "react-bootstrap";
+import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 
-export default function Password(props={}){
-
+/**
+ * Campo de senha com botão de mostrar/ocultar. Controlado: recebe `value` e `onChange`
+ * (antes guardava o próprio valor e ignorava o `value`, então nenhuma tela conseguia limpar o campo).
+ *
+ *   <Password label="Nova senha" {...form.field("password")} autoComplete="new-password" />
+ */
+export default function Password({ label = "Senha", error, className = "mb-2", ...props }) {
     const [visible, setVisible] = useState(false);
-    const [value, setValue] = useState("");
-
-    const Core = {
-        onPassToggle: () => setVisible(value => !value),
-        onChange: e => {
-            const value = e.target.value;
-            setValue(value);
-            typeof props.onChange === "function" && props.onChange(e);
-        }
-    }
+    const id = props.id || (props.name ? `field-${props.name}` : undefined);
 
     return (
-        <FloatingLabel label={props.label || "Senha"} className="mb-2">
+        <FloatingLabel controlId={id} label={label} className={`password-field ${className}`}>
             <Form.Control
+                autoComplete="current-password"
+                placeholder={label}
                 {...props}
-                value={value}
-                onChange={Core.onChange}
-                //name={props.name}
-                //onKeyDown={props.onKeyDown}
-                //onKeyUp={props.onKeyUp}
-                //ref={props.ref}
-                //id={props.id} 
-                type={visible ? "text" : "password"} 
-                placeholder={props.placeholder || "Digite sua senha"} 
-                //required={props.required || true} 
+                type={visible ? "text" : "password"}
+                isInvalid={Boolean(error)}
             />
-        <div 
-            className="visibility-toggle position-absolute text-secondary pointer" 
-            onClick={Core.onPassToggle}>
+            <button
+                type="button"
+                className="visibility-toggle"
+                onClick={() => setVisible((value) => !value)}
+                aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+                tabIndex={-1}
+            >
                 {visible ? <HiOutlineEyeSlash className="fs-5" /> : <HiOutlineEye className="fs-5" />}
-        </div>
+            </button>
+            {error && <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>}
         </FloatingLabel>
-    )
+    );
 }

@@ -1,0 +1,13 @@
+.fs-11 { font-size: 11px !important; }
+.fs-12 { font-size: 12px !important; }
+.fs-13 { font-size: 13px !important; }
+.fs-14 { font-size: 14px !important; }
+
+.rounded-50 { border-radius: 50px; }
+
+@include media-breakpoint-up(md) {
+    .w-md-25 { width: 25% !important; }
+    .w-md-50 { width: 50% !important; }
+    .w-md-75 { width: 75% !important; }
+    .w-md-100 { width: 100% !important; }
+}

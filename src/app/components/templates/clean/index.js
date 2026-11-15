@@ -1,28 +1,27 @@
-import React, {useEffect} from "react";
-import App from "app";
-import Nav from "./Nav";
+import { useEffect } from "react";
+import { Link } from "react-router";
+import config from "core/config";
+import Logo from "components/Logo";
 
-const TemplateClean = ({documentTitle, title, children, header, fluid}) => {
-
+/**
+ * Layout limpo (sem menu), para páginas públicas como o cadastro por convite.
+ *   <TemplateClean documentTitle="Convite" title="Preencha o seu cadastro">...</TemplateClean>
+ */
+export default function TemplateClean({ documentTitle, title, children, fluid = false }) {
     useEffect(() => {
-        document.title = `${documentTitle} | ${App.config("title", "Wep")}`
-    }, []);
+        const appName = config("title", "") || config("name", "") || "Wep";
+        document.title = documentTitle ? `${documentTitle} | ${appName}` : appName;
+    }, [documentTitle]);
 
     return (
         <div className="main">
-            <div className={"mt-4 container"+(fluid ? "-fluid" : "")} style={{maxWidth: '700px'}}>
-                <Nav fluid={true} />
-                {header !== false && 
-                    <TemplateClean.Header>
-                        {title && <TemplateClean.Title>{title}</TemplateClean.Title>}
-                    </TemplateClean.Header>}
-                <div className="mt-4 bg-white rounded-3 p-3 px-5">{children}</div>
+            <div className={`mt-4 ${fluid ? "container-fluid" : "container"}`} style={{ maxWidth: 700 }}>
+                <div className="text-center">
+                    <Link to="/" className="d-inline-block"><Logo className="mx-auto" /></Link>
+                </div>
+                {title && <h1 className="fw-light mt-4">{title}</h1>}
+                <div className="mt-4 bg-white rounded-3 p-3 px-md-5">{children}</div>
             </div>
         </div>
     );
 }
-
-TemplateClean.Title = ({children}) => <h1 className="fw-light">{children || "Sem título"}</h1>;
-TemplateClean.Header = ({children}) => <div className="page-header">{children}</div>;
-
-export default TemplateClean;

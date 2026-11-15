@@ -1,7 +1,7 @@
 {
     "name": "wep/project",
     "type": "project",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "A project template to make creating new Wep projects easier.",
     "keywords": ["wep"],
     "license": "MIT",
@@ -13,6 +13,11 @@
     "require": {
         "php": "^8.2",
         "wep/framework": "^2.0"
+    },
+    "scripts": {
+        "post-create-project-cmd": [
+            "php -r \"file_exists('config/.env') || copy('config/.env.example', 'config/.env');\""
+        ]
     },
     "minimum-stability": "stable",
     "prefer-stable": true

@@ -1,206 +1,84 @@
-import {TemplateMain, Empty} from "components";
-import {UserInviteApi} from "api";
-import {useReqToast} from 'hooks';
-import React, { useEffect, useState } from "react";
-import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
-import { Link, useLocation } from "react-router";
+import { Link } from "react-router";
+import { Button } from "react-bootstrap";
+import { HiOutlineTrash, HiMiniPlus, HiOutlineLink } from "react-icons/hi2";
+import { UserInviteApi } from "api";
+import { ListState, TemplateMain } from "components";
+import { useAction, useApi } from "hooks";
 
-export default function UserInvite(){
+const STATUS = {
+    pending: { text: "Pendente", bg: "secondary" },
+    cancelled: { text: "Cancelado", bg: "danger" },
+    used: { text: "Usado", bg: "success" },
+};
 
-    const [status, setStatus] = useState("processing");
-    const [data, setData] = useState([]);
-
-    const Toast = useReqToast();
-    const location = useLocation();
-    
-    useEffect(() => {
-        Core.getInvites();
-    }, [])
-
-    useEffect(() => {
-        if (location.state?.updated) {
-            Core.getInvites(); 
-        }
-    }, [location.state])
-
-    const Core = {
-
-        onRemoveBtnClick: id => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing");
-
-            UserInviteApi.delete(id)
-                .then(response => {
-
-                    setStatus("ready");
-
-                    if ( response.error ) return Toast(response);
-
-                    setData(data => data.filter(item => item.user_invite_id !== id))
-                    
-                    Toast({
-                        type: "success",
-                        message: "Removido"
-                    })
-                })
-            
-        },
-
-        onCancelBtnClick: async (id) => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing");
-
-            let update = await UserInviteApi
-                .update(id, {status: "cancelled"});
-            
-            setStatus("ready");
-
-            if ( update.error ) return Toast(update);
-
-            Toast({
-                type: "success",
-                content: "Cancelado"
-            })
-
-            Core.getInvites();
-        },
-
-        onResendBtnClick: async id => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing");
-
-            let resend = await UserInviteApi.resendUserInvite({
-                "user_invite_id": id
-            });
-
-            setStatus("ready");
-
-            if ( resend.error ) return Toast(resend);
-
-            Toast({
-                type: "success",
-                content: "Reenviado"
-            })
-
-            Core.getInvites();
-        },
-
-        getInvites: () => {
-            UserInviteApi.get()
-            .then(function(response){
-
-
-                if ( response.error ) return Toast(response);
-
-                setStatus("ready");
-                setData(response.data);
-            })
-        }
-    }
-
-    const isProcessing = status === "processing";
-    
-  
-    const Header = () => {
-        return (
-            <div className="text-end">
-                <Link className="btn btn-primary rounded-3 m-2" to="/admin/user/invite/create">
-                    <HiMiniPlus className="fs-5" /> Novo convite
-                </Link>
-            </div>
-        )
-    }
-
-    const DataList = () => {
-        return (
-            <div className={`mt-2${isProcessing ? ' full-loading' : ''}`}>
-                {
-                    data.length
-                        ? data.map(item => <DataItem key={item.user_invite_id} {...item} />)
-                        : (isProcessing ? <span></span> : <Empty />)
-                }
-            </div>
-        )
-    }
-
-    const DataItem = item => {
-
-        const isPending = item.status === "pending";
-
-        return (
-            <div className="my-2 p-2 border shadow-sm rounded bg-white d-flex align-items-center justify-content-between">
-                <div className="d-flex align-items-center">
-                    <Status status={item.status} />
-                    <span className="ms-3">{item.email}</span>
-                    <span className="ms-3">{item.user_group_name}</span>
-                </div>
-                <div>
-                    <span 
-                        className="btn btn-outline-danger m-1 px-2 py-1 fs-13 d-inline-flex"
-                        onClick={Core.onRemoveBtnClick.bind(null, item.user_invite_id)}>
-                            <HiOutlineTrash className="fs-5" />
-                            <span className="ms-1">Remover</span>
-                    </span>
-                    {isPending && <>
-                        <span 
-                            className="btn btn-outline-danger m-1 px-2 py-1 fs-13"
-                            onClick={Core.onCancelBtnClick.bind(null, item.user_invite_id)}>
-                                <span>Cancelar</span>
-                        </span>
-                        <span 
-                            className="btn btn-outline-primary m-1 px-2 py-1 fs-13"
-                            onClick={Core.onResendBtnClick.bind(null, item.user_invite_id)}>
-                                <span>Reenviar</span>
-                        </span>
-                        <Link to={`/user/invite/signup/${item.token}/`} className="btn btn-outline-dark m-1 px-2 py-1 fs-13" target="_blank">Link</Link>
-                    </>}
-                </div>
-            </div>
-        )
-    }
- 
-    const Status = ({status}) => {
-        let statusData = {
-            'pending': {
-                title: "Pendente",
-                bg: "secondary"
-            },
-            'cancelled': {
-                title: "Cancelado",
-                bg: "danger"
-            },
-            'used': {
-                title: "Usado",
-                bg: "success"
-            },
-            'other': {
-                title: status,
-                bg: "primary"
-            }
-        }
-
-        let currentStatus = statusData[status] || statusData.other;
-
-        return (
-            <span className="d-flex align-items-center">
-                <span className={`bg-${currentStatus.bg} d-inline-block`} style={{
-                    height: '12px', width: '12px', borderRadius: '50px'
-                }}></span>
-                <span className="ms-1 text-secondary">{currentStatus.title}</span>
-            </span>
-        )
-    }
+function Status({ status }) {
+    const item = STATUS[status] || { text: status, bg: "primary" };
 
     return (
-        <TemplateMain title="Convites de usuários" breadcrumbs={['page.admin']}>
-            <Header />
-            <DataList />
+        <span className="d-inline-flex align-items-center">
+            <span className={`bg-${item.bg} d-inline-block rounded-circle`} style={{ width: 12, height: 12 }} />
+            <span className="ms-1 text-secondary">{item.text}</span>
+        </span>
+    );
+}
+
+export default function UserInvite() {
+    const invites = useApi(() => UserInviteApi.get(), [], { initial: [] });
+
+    const [remove, removing] = useAction((id) => UserInviteApi.delete(id), { confirm: "Remover este convite?", success: "Convite removido" });
+    const [cancel, cancelling] = useAction((id) => UserInviteApi.update(id, { status: "cancelled" }), { confirm: "Cancelar este convite?", success: "Convite cancelado" });
+    // antes chamava "resendUserInvite", que não existia (e não havia rota para reenviar)
+    const [resend, resending] = useAction((id) => UserInviteApi.resend({ user_invite_id: id }), { confirm: "Reenviar o convite por e-mail?", success: "Convite reenviado" });
+
+    const list = Array.isArray(invites.data) ? invites.data : (invites.data ? [invites.data] : []);
+    const loading = invites.loading || removing.loading || cancelling.loading || resending.loading;
+
+    const onRemove = async (id) => {
+        const res = await remove(id);
+        if (res && !res.error) invites.setData((items) => (items || []).filter((item) => item.user_invite_id !== id));
+    };
+
+    const onCancel = async (id) => {
+        const res = await cancel(id);
+        if (res && !res.error) invites.reload();
+    };
+
+    return (
+        <TemplateMain
+            title="Convites de usuários"
+            breadcrumbs={["page.admin"]}
+            actions={<Link className="btn btn-primary m-1" to="/admin/user/invite/create/"><HiMiniPlus className="fs-5" /> Novo convite</Link>}
+        >
+            <ListState loading={loading} items={list} empty="Nenhum convite enviado">
+                {(item) => {
+                    const isPending = item.status === "pending";
+
+                    return (
+                        <div key={item.user_invite_id} className="my-2 p-2 border shadow-sm rounded bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div className="d-flex flex-wrap align-items-center gap-3">
+                                <Status status={item.status} />
+                                <span>{item.email}</span>
+                                <span className="text-secondary">{item.user_group_name}</span>
+                            </div>
+                            <div className="d-flex flex-wrap gap-1">
+                                {isPending && (
+                                    <>
+                                        <Button variant="outline-secondary" size="sm" onClick={() => onCancel(item.user_invite_id)}>Cancelar</Button>
+                                        <Button variant="outline-primary" size="sm" onClick={() => resend(item.user_invite_id)}>Reenviar</Button>
+                                        {/* antes apontava para /user/invite/signup/..., que não existe (404) */}
+                                        <a className="btn btn-outline-dark btn-sm" href={`/admin/user/invite/signup/${encodeURIComponent(item.token)}/`} target="_blank" rel="noopener noreferrer">
+                                            <HiOutlineLink /> Link
+                                        </a>
+                                    </>
+                                )}
+                                <Button variant="outline-danger" size="sm" onClick={() => onRemove(item.user_invite_id)}>
+                                    <HiOutlineTrash /> Remover
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                }}
+            </ListState>
         </TemplateMain>
-    )
+    );
 }

@@ -1,0 +1,12 @@
+// Pontos de personalização do tema. Os valores padrão ficam aqui; o módulo Config/Visual gera
+// public/assets/css/theme.css (carregado depois do main.css) sobrescrevendo estas variáveis
+// e as dos botões do Bootstrap (.btn-primary / .btn-secondary).
+
+:root {
+    --app-nav-bg: #{$light};
+    --app-nav-color: #{$body-color};
+    --app-nav-link-hover: #{$primary};
+    --app-gradient-start: #ff8563;
+    --app-gradient-end: #ffbe63;
+    --app-loading-color: var(--bs-primary);
+}

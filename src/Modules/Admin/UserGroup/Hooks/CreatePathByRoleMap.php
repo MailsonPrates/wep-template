@@ -28,6 +28,8 @@ class CreatePathByRoleMap
 
         $file->write($map, true);
 
+        // o mapa em memória (Roles::getList) passa a refletir o arquivo novo
+        Roles::flushList();
         Roles::buildRoles();
     }
 }

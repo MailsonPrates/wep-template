@@ -1,0 +1,68 @@
+body {
+    font-optical-sizing: auto;
+}
+
+.pointer { cursor: pointer !important; }
+
+.hide-arrow.dropdown-toggle::after { display: none !important; }
+
+// Gradiente da marca (botão de login, destaques). As cores vêm do tema.
+.gradient-primary,
+.gradient-primary-hover:hover {
+    background: linear-gradient(90deg, var(--app-gradient-start) 34%, var(--app-gradient-end) 97%);
+    color: $white;
+}
+
+.gradient-primary.btn:hover,
+.gradient-primary.btn:focus-visible {
+    filter: brightness(.95);
+    color: $white;
+}
+
+.text-gradient,
+.text-gradient-hover:hover {
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+// Barra de progresso de navegação (nprogress)
+#nprogress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: $zindex-fixed + 1;
+    pointer-events: none;
+
+    .bar {
+        background: linear-gradient(90deg, var(--app-gradient-start), var(--app-gradient-end));
+        height: 3px;
+    }
+
+    .spinner { display: none; }
+}
+
+// Página de erro (403/404)
+.error-page {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+
+    &-code {
+        font-size: 6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    &-description {
+        color: $gray-400;
+        font-size: 2.6rem;
+        font-weight: 500;
+        max-width: 260px;
+        line-height: 1.1;
+        margin-left: 15px;
+        text-align: left;
+    }
+}

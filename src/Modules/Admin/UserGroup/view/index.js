@@ -1,111 +1,47 @@
-
-import React, { useEffect, useState } from "react";
-import {TemplateMain, Empty} from "components";
-import {useReqToast} from 'hooks';
+import { Link } from "react-router";
+import { Button } from "react-bootstrap";
 import { HiOutlineTrash, HiMiniPlus } from "react-icons/hi2";
-import {UserGroupApi} from "api";
-import { Link, useLocation } from "react-router";
+import { UserGroupApi } from "api";
+import { ListState, TemplateMain } from "components";
+import route from "core/route";
+import { useAction, useApi } from "hooks";
 
-export default function UserGroup(){
+export default function UserGroup() {
+    const groups = useApi(() => UserGroupApi.get(), [], { initial: [] });
 
-    const [status, setStatus] = useState("processing");
-    const [roles, setRoles] = useState([]);
+    const [remove, { loading: removing }] = useAction((id) => UserGroupApi.delete(id), {
+        confirm: "Remover este grupo? Usuários do grupo ficam sem permissões.",
+        success: "Grupo removido",
+    });
 
-    const Toast = useReqToast();
-    const location = useLocation();
+    const onRemove = async (id) => {
+        const res = await remove(id);
+        if (res && !res.error) groups.setData((list) => list.filter((item) => item.user_group_id !== id));
+    };
 
-    useEffect(() => {
-        Core.getGroups(); 
-    }, [])
+    return (
+        <TemplateMain
+            title="Grupos de usuários"
+            breadcrumbs={["page.admin"]}
+            actions={<Link className="btn btn-primary m-1" to="/admin/user/group/create/"><HiMiniPlus className="fs-5" /> Novo grupo</Link>}
+        >
+            <ListState loading={groups.loading || removing} items={groups.data} empty="Nenhum grupo cadastrado" className="w-md-75">
+                {(item) => {
+                    const home = route(item.home_role || "page.home");
 
-    useEffect(() => {
-        if (location.state?.updated) {
-           Core.getGroups(); 
-        }
-    }, [location.state])
-
-    const Core = {
-
-        onRemoveBtnClick: id => {
-
-            if ( !confirm("Tem certeza?") ) return;
-
-            setStatus("processing");
-
-            UserGroupApi.delete(id)
-                .then(response => {
-
-                    setStatus("ready");
-
-                    if ( response.error ) return Toast(response);
-
-                    setRoles(values => values.filter(item => item.user_group_id !== id))
-                    
-                    Toast({
-                        type: "success",
-                        message: "Removido"
-                    })
-                })
-        },
-
-        getGroups: () => UserGroupApi
-        .get()
-        .then(function(response){
-
-
-            if ( response.error ) return Toast(response);
-
-            setStatus("ready");
-            setRoles(response.data);
-        }),
-
-        updateList: () => {
-            setStatus("processing");
-            Core.getGroups();
-        },
-
-    }
-
-    const DataList = () => {
-        let isProcessing = status === "processing";
-        return (
-            <div className={`mt-2 w-md-50${isProcessing ? ' full-loading' : ''}`}>
-                {
-                    roles.length
-                    ? roles.map(item => <DataItem key={item.user_group_id} {...item} />)
-                    : (isProcessing ? <span></span> : <Empty />)
-                }
-            </div>
-        )
-    }
-
-    const DataItem = props => {
-        return (
-            <div className="my-2 p-2 border shadow-sm rounded bg-white d-flex align-items-center justify-content-between">
-                <Link className="text-decoration-none text-reset col-11" to={`/admin/user/group/${props.user_group_id}/edit`}>
-                    <div>{props.name}</div>
-                </Link>
-                <span className="text-danger fs-4 pointer col-1 text-end" onClick={Core.onRemoveBtnClick.bind(this, props.user_group_id)}>
-                    <HiOutlineTrash />
-                </span>
-            </div>
-        )
-    }
-
-    const Header = () => {
-        return (
-            <div className="text-end">
-                <Link className="btn btn-primary rounded-3 m-2" to="/admin/user/group/create">
-                    <HiMiniPlus className="fs-5" /> Novo grupo
-                </Link>
-            </div>
-        )
-    }
-
-     return (
-        <TemplateMain title="Grupos de usuários" breadcrumbs={['page.admin']}>
-            <Header />
-            <DataList />
+                    return (
+                        <div key={item.user_group_id} className="my-2 p-2 border shadow-sm rounded bg-white d-flex align-items-center justify-content-between">
+                            <Link className="text-reset flex-grow-1" to={`/admin/user/group/${item.user_group_id}/edit/`}>
+                                <div className="fw-medium">{item.name}</div>
+                                <div className="fs-13 text-secondary">Página inicial: {home ? home.title : "Home"}{home && home.path ? ` (${home.path})` : ""}</div>
+                            </Link>
+                            <Button variant="link" className="text-danger fs-4" onClick={() => onRemove(item.user_group_id)} aria-label="Remover grupo">
+                                <HiOutlineTrash />
+                            </Button>
+                        </div>
+                    );
+                }}
+            </ListState>
         </TemplateMain>
-    )
+    );
 }

@@ -1,0 +1,84 @@
+.menu {
+    list-style: none;
+    margin: 0;
+    padding: 1.5rem 0 1rem;
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    &-item-link {
+        display: block;
+        position: relative;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+        text-decoration: none;
+        font-size: 15px;
+        color: $menu-link-color;
+        cursor: pointer;
+
+        &.active,
+        &:hover {
+            background: #f9f9f9;
+            border-top-right-radius: 50px;
+            border-bottom-right-radius: 50px;
+            color: $body-color;
+        }
+
+        &.active { background: #f2f2f2; }
+    }
+
+    &-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    &-item {
+        &.item-main {
+            min-height: 44.5px;
+
+            > .menu-item-link {
+                padding: 11px 25px 11px 20px;
+                max-width: 90%;
+
+                .i-caret { display: none; }
+
+                &.active .i-caret,
+                &:hover .i-caret { display: block; }
+            }
+        }
+
+        &.item-child {
+            > .menu-item-link {
+                font-size: 14px;
+                padding: 5px 0 5px 30px !important;
+                border-left: 3px solid $white;
+                margin-right: 22px;
+                max-width: calc(100% - 22px);
+
+                &.active {
+                    background: none;
+                    font-weight: 500;
+                    color: var(--bs-primary);
+                }
+            }
+
+            &.has-child {
+                > .menu-item-link { padding-right: 17px !important; }
+
+                .menu-item-childs .menu-item-link { padding-left: 40px !important; }
+            }
+        }
+    }
+
+    &-item-childs > ul {
+        border-bottom: 1px solid $border-color;
+        margin: .5rem 0 1rem;
+        padding-bottom: 1rem;
+    }
+}

@@ -1,20 +1,13 @@
-import {TemplateMain} from "components";
-import UserGroupForm from "./common/UserGroupForm";
-import React from "react";
 import { useNavigate } from "react-router";
+import { TemplateMain } from "components";
+import UserGroupForm from "./UserGroupForm";
 
-export default function UserGroupCreate(){
-
+export default function UserGroupCreate() {
     const navigate = useNavigate();
 
-    const breadcrumbs = [
-        {title: "Admin", path: "/admin/"},
-        {title: "Grupos de usuários", path: "/admin/user/group/"}
-    ]
-
     return (
-        <TemplateMain title="Grupos de usuários" breadcrumbs={breadcrumbs}>
-            <UserGroupForm afterSave={() => navigate("/admin/user/group/", {state: {update: true}})} config={{}} />
+        <TemplateMain title="Novo grupo de usuários" breadcrumbs={["page.admin", "page.admin.user.group"]}>
+            <UserGroupForm onSaved={() => navigate("/admin/user/group/")} />
         </TemplateMain>
-    )
+    );
 }

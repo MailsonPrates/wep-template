@@ -57,7 +57,6 @@ e `theme.css`, `public/assets/icons/hi2-outline.json` (`npm run icons`).
 
 ## Ambiente (Windows)
 
-- O `php` do terminal (`C:\php`) não tem `gd`: o sandbox acrescenta `-d extension=gd` sozinho.
 - Antes de trocar para uma `main` antiga, confira se ela versiona arquivos hoje ignorados (`config/.env`,
   `.vscode/ftp-kr.json`): o merge apagaria as cópias locais.
 - Prefira as ferramentas de arquivo a heredocs grandes no shell (o shell estraga `\` e blocos longos);

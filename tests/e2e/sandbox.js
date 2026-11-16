@@ -210,7 +210,18 @@ function clean() {
     log(`clean: ${SANDBOX} e o banco ${DB.name} removidos`);
 }
 
+/** jsdom fica em tests/e2e (fora do package.json do template, que vai para os apps). */
+function ensureTestDeps() {
+    if (fs.existsSync(path.join(__dirname, "node_modules/jsdom"))) return;
+
+    log("instalando as dependências dos testes (tests/e2e)");
+    const npmArgs = ["install", "--no-audit", "--no-fund", "--silent"];
+    if (WINDOWS) run("cmd", ["/c", "npm", ...npmArgs], { cwd: __dirname });
+    else run("npm", npmArgs, { cwd: __dirname });
+}
+
 async function test(options) {
+    ensureTestDeps();
     sync();
     reset();
     if (!options.skipBuild) build();

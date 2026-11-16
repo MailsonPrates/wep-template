@@ -1,0 +1,8 @@
+{
+  "name": "wep-template-e2e",
+  "private": true,
+  "description": "Testes de ponta a ponta do template (sandbox). Instalado pelo próprio sandbox.js na primeira execução.",
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

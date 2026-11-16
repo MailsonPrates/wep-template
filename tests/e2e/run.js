@@ -318,9 +318,19 @@ module.exports = async function run({ base: BASE, sandbox: SANDBOX, admin: ADMIN
         check("criar usuário com e-mail", created.json && !created.json.error, created.json && created.json.message);
 
         // sem CRUD automático: só existem as rotas declaradas no config/module.php
-        // (rota desconhecida cai na página do front, que mostra o 404: nenhum controller roda)
         const removed = await api(admin, "/admin/user/api/create/", { firstname: "X" });
-        check("rota CRUD não declarada não executa", removed.json === null, removed.status);
+        check(
+            "rota de API desconhecida → 404 em JSON",
+            removed.status === 404 && removed.json && removed.json.http_code === 404,
+            `${removed.status} ${removed.text.slice(0, 80)}`
+        );
+
+        const unknown = await open("/pagina-que-nao-existe/", admin);
+        check(
+            "página desconhecida → 404 com a tela do front",
+            unknown.status === 404 && /Página não encontrada/.test(unknown.text()),
+            unknown.status
+        );
 
         const jar = await login();
         const p = await open("/admin/user/", jar);

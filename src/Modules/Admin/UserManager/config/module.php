@@ -17,7 +17,6 @@ return [
     'title' => 'Usuários',
     'routes' => [
         'path' => '/admin/user',
-        'methods' => ['get', 'delete'],
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'groups' => [
             [
@@ -34,6 +33,16 @@ return [
                 'path' => '/{id}/edit',
                 'view' => 'UserUpdate',
                 'label' => 'Atualizar usuários'
+            ],
+            [
+                'path' => '/get',
+                'method' => 'get',
+                'label' => 'listar'
+            ],
+            [
+                'path' => '/delete',
+                'method' => 'delete',
+                'label' => 'deletar'
             ],
             [
                 'path' => '/save',

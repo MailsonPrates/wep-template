@@ -14,7 +14,7 @@ export default function Breadcrumbs({ list = [] }) {
 
     return (
         <nav aria-label="breadcrumb" style={{ "--bs-breadcrumb-divider": "'›'" }}>
-            <ol className="breadcrumb mb-0 fs-14 text-secondary">
+            <ol className="breadcrumb mb-0 fs-14">
                 <li className="breadcrumb-item">
                     <Link className="text-reset d-inline-flex align-items-center" to={homePath()}>
                         <HiOutlineHome />

@@ -64,7 +64,13 @@ module.exports = (env, argv) => {
           use: {
             loader: "babel-loader",
             options: {
-              presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]]
+              // React Compiler: memoriza componentes e hooks no build. Escreva componentes simples,
+              // sem useMemo/useCallback/React.memo por desempenho (o plugin precisa vir primeiro).
+              plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+              presets: [
+                '@babel/preset-env',
+                ['@babel/preset-react', { runtime: 'automatic' }],
+              ],
             }
           }
         }

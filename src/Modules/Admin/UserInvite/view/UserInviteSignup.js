@@ -27,7 +27,11 @@ function useUsernameCheck(username) {
 
         const timer = setTimeout(async () => {
             const res = await UserInviteApi.validateUsername({ username });
-            if (active) setState(res.error ? { status: "invalid", message: res.message || "Nome de usuário indisponível" } : { status: "valid", message: "" });
+            if (!active) return;
+
+            setState(res.error
+                ? { status: "invalid", message: res.message || "Nome de usuário indisponível" }
+                : { status: "valid", message: "" });
         }, 600);
 
         return () => { active = false; clearTimeout(timer); };

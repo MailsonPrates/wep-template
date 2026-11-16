@@ -3,6 +3,8 @@
 namespace App\Common\Templates;
 
 use App\App;
+use App\Modules\Config\Visual\Services\Favicon;
+use App\Modules\Config\Visual\Services\Fonts;
 use App\Modules\Config\Visual\Services\Logo;
 use App\Modules\Config\Visual\Services\Theme;
 use App\Modules\User\User;
@@ -23,8 +25,9 @@ class Main implements iTemplate
             // título com os parâmetros da rota (ex.: "Pedido #123 | App"); o Html escapa o <title>
             "title" => $route->document_title ?? App::config('name|title', ''),
             "head" => [
-                ["link", ["rel" => "icon", "href" => App::assets("images/favicon.png?v=3")]],
-                ["link", ["rel" => "stylesheet", "href" => "https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;700;900&display=swap"]],
+                // favicon e fonte de Config > Visual
+                ...self::favicon(),
+                ["link", ["rel" => "stylesheet", "href" => Fonts::url(self::visual('font'))]],
                 // Bootstrap + estilos do app, compilados de src/app/styles/main.scss (npm run dev/prod);
                 // o segundo parâmetro acrescenta ?v=<data do arquivo>: cache do navegador até o próximo build
                 ["link", ["rel" => "stylesheet", "href" => App::assets("css/main.css", true)]],
@@ -33,7 +36,12 @@ class Main implements iTemplate
                 // Html::json: os dados do usuário não conseguem fechar o <script>
                 ['script', ['html' => 'window.App = ' . Html::json([
                     'user' => User::getData(),
-                    'visual' => ['logo' => self::logo()],
+                    'visual' => [
+                        'logo' => self::visual('logo'),
+                        'logo_dark' => self::visual('logo_dark'),
+                        // nav escura: o Nav usa o logo para fundo escuro
+                        'nav_dark' => self::visual('nav_dark'),
+                    ],
                     // página aberta sem permissão (CheckPermission): o front mostra "Acesso negado"
                     'forbidden' => (bool) ($route->forbidden ?? false),
                 ])]],
@@ -60,14 +68,56 @@ class Main implements iTemplate
         return [["link", ["rel" => "stylesheet", "id" => "app-theme", "href" => App::assets("css/theme.css", true)]]];
     }
 
-    /** Logo de Config > Visual; com o banco indisponível, o padrão do template. */
-    private static function logo(): string
+    /**
+     * Valores de Config > Visual; com o banco indisponível, os padrões do template.
+     *
+     * @param string $key logo | logo_dark | nav_dark | font
+     */
+    private static function visual(string $key)
     {
         try {
-            return Logo::url();
+            return match ($key) {
+                'logo' => Logo::url(),
+                'logo_dark' => Logo::url('logo_dark'),
+                'nav_dark' => Theme::isDark(Theme::colors()['nav_bg']),
+                'font' => Theme::text()['font'],
+            };
         } catch (\Throwable $e) {
-            return Logo::DEFAULT;
+            return match ($key) {
+                'logo', 'logo_dark' => Logo::DEFAULT,
+                'nav_dark' => false,
+                'font' => Fonts::DEFAULT,
+            };
         }
+    }
+
+    /** Favicon enviado em Config > Visual (32px + 180px para celular) ou o padrão. */
+    private static function favicon(): array
+    {
+        try {
+            $custom = Favicon::urls();
+        } catch (\Throwable $e) {
+            $custom = null;
+        }
+
+        if ( $custom === null ) return [["link", ["rel" => "icon", "href" => App::assets("images/favicon.png?v=3")]]];
+
+        $links = [["link", [
+            "rel" => "icon",
+            "type" => "image/png",
+            "sizes" => "32x32",
+            "href" => $custom['icon'],
+        ]]];
+
+        if ( $custom['apple'] ){
+            $links[] = ["link", [
+                "rel" => "apple-touch-icon",
+                "sizes" => "180x180",
+                "href" => $custom['apple'],
+            ]];
+        }
+
+        return $links;
     }
 
     /**

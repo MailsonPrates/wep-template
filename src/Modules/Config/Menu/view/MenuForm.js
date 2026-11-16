@@ -18,7 +18,7 @@ export default function MenuForm({ menu, onClose, onSaved }) {
     }, [menu]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [save, { loading }] = useAction(
-        (fields) => (isUpdate ? MenuApi.update(menu.id, fields) : MenuApi.create(fields)),
+        (fields) => (isUpdate ? MenuApi.update({ id: menu.id, ...fields }) : MenuApi.create(fields)),
         { success: "Menu salvo" }
     );
 

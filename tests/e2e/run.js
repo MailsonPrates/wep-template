@@ -145,11 +145,11 @@ module.exports = async function run({ base: BASE, sandbox: SANDBOX, admin: ADMIN
     await section("menu: troca de ícone pelo painel (sem rebuild)", async () => {
         const menus = (await api(admin, "/config/menu/api/get/", {})).json.data;
         const home = menus[0].child.find((item) => item.title === "Home");
-        const bad = await api(admin, "/config/menu/api/item/update/", { id: home.id, fields: { icon: "HiFakeIcon" } });
+        const bad = await api(admin, "/config/menu/api/item/update/", { id: home.id, icon: "HiFakeIcon" });
         check("ícone inexistente recusado", bad.json && bad.json.error);
-        const legacy = await api(admin, "/config/menu/api/item/update/", { id: home.id, fields: { icon: '{"import":"alert(1)","from":"x"}' } });
+        const legacy = await api(admin, "/config/menu/api/item/update/", { id: home.id, icon: '{"import":"alert(1)","from":"x"}' });
         check("formato antigo (injeção) recusado", legacy.json && legacy.json.error);
-        await api(admin, "/config/menu/api/item/update/", { id: home.id, fields: { icon: "HiOutlineStar" } });
+        await api(admin, "/config/menu/api/item/update/", { id: home.id, icon: "HiOutlineStar" });
         const p = await open("/", admin);
         const d = p.doc.querySelector(".sidebar .menu > li.item-main svg path")?.getAttribute("d");
         check("sidebar mostra o ícone novo", d === catalog.HiOutlineStar.child[0].attr.d);
@@ -157,22 +157,22 @@ module.exports = async function run({ base: BASE, sandbox: SANDBOX, admin: ADMIN
 
     await section("grupo: rota inicial e permissões valendo na hora", async () => {
         const group = (await api(admin, "/admin/user/group/api/get/", { id: 1 })).json.data;
-        const invalid = await api(admin, "/admin/user/group/api/update/", { id: 1, fields: { home_role: "page.nao.existe" } });
+        const invalid = await api(admin, "/admin/user/group/api/update/", { id: 1, home_role: "page.nao.existe" });
         check("rota inicial inválida recusada", invalid.json && invalid.json.error);
-        await api(admin, "/admin/user/group/api/update/", { id: 1, fields: { home_role: "page.admin.user" } });
+        await api(admin, "/admin/user/group/api/update/", { id: 1, home_role: "page.admin.user" });
         const other = await login();
         check("login cai na rota inicial do grupo", other.lastLogin && other.lastLogin.redirect === "/admin/user/", JSON.stringify(other.lastLogin));
-        await api(admin, "/admin/user/group/api/update/", { id: 1, fields: { home_role: "page.home" } });
+        await api(admin, "/admin/user/group/api/update/", { id: 1, home_role: "page.home" });
 
         const without = group.roles.split(",").filter((role) => role !== "api.admin.user.get").join(",");
-        await api(admin, "/admin/user/group/api/update/", { id: 1, fields: { roles: without } });
+        await api(admin, "/admin/user/group/api/update/", { id: 1, roles: without });
         check("permissão revogada → 403 na mesma sessão", (await api(other, "/admin/user/api/get/", {})).status === 403);
-        await api(admin, "/admin/user/group/api/update/", { id: 1, fields: { roles: group.roles } });
+        await api(admin, "/admin/user/group/api/update/", { id: 1, roles: group.roles });
         check("permissão devolvida → 200", (await api(other, "/admin/user/api/get/", {})).status === 200);
     });
 
     await section("permissão de página (usuário restrito)", async () => {
-        await api(admin, "/admin/user/group/api/create/", { fields: { name: "Suporte", roles: "page.admin.user,api.admin.user.get", home_role: "page.admin.user" } });
+        await api(admin, "/admin/user/group/api/create/", { name: "Suporte", roles: "page.admin.user,api.admin.user.get", home_role: "page.admin.user" });
         const groups = (await api(admin, "/admin/user/group/api/get/", {})).json.data;
         const groupId = groups.find((g) => g.name === "Suporte").user_group_id;
         await api(admin, "/admin/user/api/save/", { firstname: "Sup", lastname: "Teste", username: "suporte", no_email: true, user_group_id: groupId });
@@ -198,30 +198,129 @@ module.exports = async function run({ base: BASE, sandbox: SANDBOX, admin: ADMIN
         check("sem erros JS", !p.errors.length, p.errors.join(" | "));
     });
 
-    await section("Visual: cores e logo", async () => {
-        const bad = await api(admin, "/config/visual/api/colors/", { colors: { primary_bg: "red;}body{display:none" } });
+    await section("Visual: cores, fonte, título, logos e favicon", async () => {
+        const image = (name = "logo.png") => {
+            const fd = new FormData();
+            const blob = new Blob([fs.readFileSync(path.join(FIXTURES, name))], { type: "image/png" });
+            fd.append("file", blob, name);
+            return fd;
+        };
+        const upload = (variant) => {
+            const fd = image();
+            fd.append("variant", variant);
+            return api(admin, "/config/visual/api/logo/", fd, { form: true });
+        };
+
+        const bad = await api(admin, "/config/visual/api/colors/", {
+            colors: { primary_bg: "red;}body{display:none" },
+        });
         check("cor inválida recusada", bad.json && bad.json.error);
-        await api(admin, "/config/visual/api/colors/", { colors: { primary_bg: "#123456", nav_bg: "#222222" } });
+
+        const badFont = await api(admin, "/config/visual/api/colors/", {
+            colors: {},
+            text: { font: "Inter;}body{display:none" },
+        });
+        check("fonte inválida recusada", badFont.json && badFont.json.error);
+
+        const badSize = await api(admin, "/config/visual/api/colors/", { colors: {}, text: { title_size: 500 } });
+        check("tamanho de título fora da faixa recusado", badSize.json && badSize.json.error);
+
+        await api(admin, "/config/visual/api/colors/", {
+            colors: { primary_bg: "#123456", nav_bg: "#222222", title_text: "#aa0000" },
+            text: { font: "inter", title_size: 30 },
+        });
         const css = fs.readFileSync(path.join(SANDBOX, "public/assets/css/theme.css"), "utf8");
         check("theme.css regerado", css.includes("--bs-btn-bg: #123456") && css.includes("--app-nav-bg: #222222"));
+        check("links e foco seguem a cor primária", css.includes("--bs-link-color: #123456"));
+        check("fonte no tema (grafia da lista)", css.includes('--bs-body-font-family: "Inter"'));
+        check("cor e tamanho do título", css.includes(".page-header h1 { color: #aa0000; font-size: 30px; }"));
 
-        const fd = new FormData();
-        fd.append("file", new Blob([fs.readFileSync(path.join(FIXTURES, "logo.png"))], { type: "image/png" }), "logo.png");
-        const upload = await api(admin, "/config/visual/api/logo/", fd, { form: true });
-        const logo = upload.json && upload.json.data && upload.json.data.logo;
-        check("upload → .webp no cache", logo && /\/cache\/logo\/logo-[a-f0-9]+\.webp\?v=\d+$/.test(logo), JSON.stringify(upload.json).slice(0, 150));
-        const p = await open("/login/", new CookieJar());
+        let p = await open("/login/", new CookieJar());
+        const fontLink = p.doc.querySelector('link[href^="https://fonts.googleapis.com/"]');
+        check(
+            "página carrega a fonte com os pesos",
+            fontLink && fontLink.getAttribute("href").includes("family=Inter:wght@300;400;500;600;700;900"),
+            fontLink && fontLink.getAttribute("href")
+        );
+
+        const sent = await upload("logo");
+        const logo = sent.json && sent.json.data && sent.json.data.images.logo.url;
+        check(
+            "upload → .webp do ImageCache",
+            logo && /\/cache\/logo\/logo-[a-f0-9]+-0x240\.webp\?v=\d+$/.test(logo),
+            JSON.stringify(sent.json).slice(0, 150)
+        );
+        p = await open("/login/", new CookieJar());
         check("login mostra o logo novo", p.doc.querySelector("img.brand-logo")?.getAttribute("src") === logo);
+
+        const dark = await upload("logo_dark");
+        const darkUrl = dark.json && dark.json.data && dark.json.data.images.logo_dark.url;
+        check("logo para fundo escuro", darkUrl && /logo-dark-[a-f0-9]+-0x240\.webp/.test(darkUrl), darkUrl);
+        p = await open("/", admin);
+        const navLogo = p.doc.querySelector(".main-nav img.brand-logo");
+        check("nav escura usa o logo para fundo escuro", navLogo && navLogo.getAttribute("src") === darkUrl);
+
+        const favicon = await upload("favicon");
+        check("upload do favicon", favicon.json && favicon.json.data && favicon.json.data.images.favicon.custom);
+        p = await open("/login/", new CookieJar());
+        const icon = p.doc.querySelector('link[rel="icon"][sizes="32x32"]');
+        const apple = p.doc.querySelector('link[rel="apple-touch-icon"]');
+        check(
+            "favicon 32x32 e 180x180 em PNG",
+            icon && /favicon-[a-f0-9]+-32x32c\.png/.test(icon.getAttribute("href")) && apple,
+            icon && icon.getAttribute("href")
+        );
+
         const notImage = new FormData();
         notImage.append("file", new Blob(["<?php echo 1;"], { type: "image/png" }), "x.png");
         check("arquivo que não é imagem recusado", (await api(admin, "/config/visual/api/logo/", notImage, { form: true })).json.error);
+
+        const badVariant = await upload("../x");
+        check("variação desconhecida recusada", badVariant.json && badVariant.json.error);
+
+        for (const variant of ["logo_dark", "favicon"]) {
+            await api(admin, "/config/visual/api/logo/remove/", { variant });
+        }
         const restore = await api(admin, "/config/visual/api/logo/remove/", {});
         check("restaurar → logo padrão", restore.json && restore.json.data.logo === "/assets/images/logo.png");
+        p = await open("/login/", new CookieJar());
+        check("favicon padrão de volta", !!p.doc.querySelector('link[rel="icon"][href*="images/favicon.png"]'));
+
+        // volta ao tema padrão para não afetar as outras seções
+        await api(admin, "/config/visual/api/colors/", {
+            colors: { primary_bg: "#ff7a59", nav_bg: "#f8f9fa", title_text: "#212529" },
+            text: { font: "Jost", title_size: 0 },
+        });
+    });
+
+    await section("foto do perfil em .webp", async () => {
+        const jar = await login();
+        const fd = new FormData();
+        const photo = new Blob([fs.readFileSync(path.join(FIXTURES, "logo.png"))], { type: "image/png" });
+        fd.append("file", photo, "foto.png");
+        fd.append("firstname", "Maria");
+        fd.append("lastname", "Admin");
+        fd.append("nickname", "");
+        fd.append("password", "");
+        fd.append("image_update", "true");
+        fd.append("image_remove", "false");
+        const saved = await api(jar, "/user/profile/api/salvar/", fd, { form: true });
+        check("perfil salvo com foto", saved.json && !saved.json.error, saved.json && saved.json.message);
+
+        const p = await open("/", jar);
+        const avatar = p.doc.querySelector(".main-nav .nav-avatar");
+        const style = avatar ? avatar.getAttribute("style") || "" : "";
+        check("foto da nav em .webp (original intacto)", /-36x36c\.webp/.test(style), style.slice(0, 120));
     });
 
     await section("usuários e sessão", async () => {
         const created = await api(admin, "/admin/user/api/save/", { firstname: "Ana", lastname: "Teste", username: "ana.teste", email: "ana@exemplo.test", user_group_id: 1 });
         check("criar usuário com e-mail", created.json && !created.json.error, created.json && created.json.message);
+
+        // sem CRUD automático: só existem as rotas declaradas no config/module.php
+        // (rota desconhecida cai na página do front, que mostra o 404: nenhum controller roda)
+        const removed = await api(admin, "/admin/user/api/create/", { firstname: "X" });
+        check("rota CRUD não declarada não executa", removed.json === null, removed.status);
 
         const jar = await login();
         const p = await open("/admin/user/", jar);

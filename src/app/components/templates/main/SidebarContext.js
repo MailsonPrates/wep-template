@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 const SidebarContext = createContext(null);
 const STORAGE_KEY = "sidebar_open";
@@ -21,20 +21,20 @@ export function SidebarProvider({ children }) {
     const [isOpen, setIsOpen] = useState(readOpen);
     const [openGroups, setOpenGroups] = useState([]);
 
-    const toggleSidebar = useCallback((value) => {
+    const toggleSidebar = (value) => {
         setIsOpen((prev) => {
             const next = typeof value === "boolean" ? value : !prev;
             try { window.localStorage.setItem(STORAGE_KEY, String(next)); } catch (e) { /* sem storage */ }
             return next;
         });
-    }, []);
+    };
 
     /**
      * @param {{id: number}} item  grupo clicado
      * @param {number[]} siblingIds ids dos itens do mesmo nível (fechados ao abrir este)
      * @param {boolean} [force]     true = só abrir (ex.: grupo da página atual)
      */
-    const toggleGroup = useCallback((item, siblingIds = [], force) => {
+    const toggleGroup = (item, siblingIds = [], force) => {
         setOpenGroups((prev) => {
             const isOpenNow = prev.includes(item.id);
 
@@ -43,12 +43,9 @@ export function SidebarProvider({ children }) {
 
             return [...prev.filter((id) => !siblingIds.includes(id)), item.id];
         });
-    }, []);
+    };
 
-    const value = useMemo(
-        () => ({ isOpen, toggleSidebar, openGroups, toggleGroup }),
-        [isOpen, toggleSidebar, openGroups, toggleGroup]
-    );
+    const value = { isOpen, toggleSidebar, openGroups, toggleGroup };
 
     return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
 }

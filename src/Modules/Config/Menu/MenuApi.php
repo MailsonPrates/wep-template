@@ -1,123 +1,152 @@
 <?php
- 
+
 namespace App\Modules\Config\Menu;
 
-use Wep\Cache;
 use Wep\Controller;
 use Wep\Response;
-use App\Modules\Config\Menu\Menu;
+use Wep\Router\Http\RouterHttpRequest;
 use Wep\Str;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\Config\Menu\Services\MenuItemService;
 use App\Modules\Config\Menu\Services\MenuService;
-use Wep\Api\ClientPayload;
-use Wep\Api\InvalidPayloadException;
 
 /**
- * Classe controller responsável por implementar métodos
- * que lidam com as requisições vindas do front
+ * Menus e itens de menu. O front envia o payload livre; só os campos abaixo são lidos.
  */
 class MenuApi
 {
     use Controller;
 
-    public function get($request, $response)
+    /** Campos de um item de menu que o painel pode gravar. */
+    private const ITEM_FIELDS = [
+        'title',
+        'permission',
+        'user_groups',
+        'external',
+        'type',
+        'link',
+        'menu_id',
+        'parent_id',
+        'sort_order',
+        'icon',
+    ];
+
+    public function get(RouterHttpRequest $request, Response $response)
     {
-        $data = $request->data();
-        $menus = MenuService::get($data);
-        return $response->json(Response::success($menus));
+        return $response->json(Response::success(MenuService::get()));
     }
 
-    public function create($request, $response)
+    public function create(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $fields = Menu::clientPayload('create')['fields'];
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
+        $name = trim((string) ($request->name ?? ''));
 
-        // slug gerado no servidor a partir do nome
-        $slug = Str::normalize($fields['name'] ?? '');
-        $slug = strtolower($slug);
-        $fields['slug'] = str_replace(" ", "_", $slug);
+        if ( $name === '' ) return $response->json(Response::error('Informe o nome do menu'));
 
-        return $response->json(MenuService::create($fields));
+        return $response->json(MenuService::create([
+            'name' => $name,
+            'slug' => self::slug($name),
+        ]));
     }
 
-    public function update($request, $response)
+    public function update(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $payload = Menu::clientPayload('update');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
+        $id = (int) ($request->id ?? 0);
+        $name = trim((string) ($request->name ?? ''));
 
-        return $response->json(MenuService::update($payload['id'], $payload['fields']));
+        if ( !$id ) return $response->json(Response::error('Menu não encontrado'));
+
+        if ( $name === '' ) return $response->json(Response::error('Informe o nome do menu'));
+
+        return $response->json(MenuService::update($id, ['name' => $name]));
     }
 
-    public function delete($request, $response)
+    public function delete(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $payload = Menu::clientPayload('delete');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
+        $id = (int) ($request->id ?? 0);
 
-        return $response->json(MenuService::delete($payload['id']));
+        if ( !$id ) return $response->json(Response::error('Menu não encontrado'));
+
+        return $response->json(MenuService::delete($id));
     }
 
-    public function sort($request, $response)
+    public function sort(RouterHttpRequest $request, Response $response)
     {
         $items = $request->items ?? [];
-        return $response->json(MenuService::sort($items));
+
+        return $response->json(MenuService::sort(is_array($items) ? $items : []));
     }
 
     /**
      * MENU ITEMS
      */
 
-    public function createItem($request, $response)
+    public function createItem(RouterHttpRequest $request, Response $response)
     {
-        return $this->menuItem('create', $request, $response);
+        $fields = self::itemFields($request);
+        $error = self::invalidItem($fields);
+
+        if ( $error ) return $response->json($error);
+
+        return $response->json(MenuItemService::create($fields));
     }
 
-    public function updateItem($request, $response)
+    public function updateItem(RouterHttpRequest $request, Response $response)
     {
-        return $this->menuItem('update', $request, $response);
+        $id = (int) ($request->id ?? 0);
+
+        if ( !$id ) return $response->json(Response::error('Item não encontrado'));
+
+        $fields = self::itemFields($request);
+        $error = self::invalidItem($fields);
+
+        if ( $error ) return $response->json($error);
+
+        return $response->json(MenuItemService::update($id, $fields));
     }
 
-    public function deleteItem($request, $response)
+    public function deleteItem(RouterHttpRequest $request, Response $response)
     {
-        return $this->menuItem('delete', $request, $response);
+        $id = (int) ($request->id ?? 0);
+
+        if ( !$id ) return $response->json(Response::error('Item não encontrado'));
+
+        return $response->json(MenuItemService::delete($id));
     }
 
-    /**
-     * Os itens de menu são gravados com DB::table('menu_items') (sem Model), então o contrato do
-     * cliente (id + campos) é validado aqui.
-     */
-    private function menuItem(string $operation, $request, $response)
+    public function getRolesData(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $payload = ClientPayload::parse($request->data(), $operation, [
-                'table' => 'menu_items',
-                'fillable' => ['title', 'permission', 'user_groups', 'external', 'type', 'link', 'menu_id', 'parent_id', 'sort_order', 'icon'],
-            ]);
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
+        $userGroups = UserGroup::get([
+            'fields' => ['user_group_id', 'name'],
+        ]);
+
+        return $response->json(Response::success([
+            'roles' => Roles::get(),
+            'userGroups' => $userGroups->data
+        ]));
+    }
+
+    /** Só os campos conhecidos que vieram no payload (update parcial). */
+    private static function itemFields(RouterHttpRequest $request): array
+    {
+        $data = $request->data();
+
+        return array_intersect_key($data, array_flip(self::ITEM_FIELDS));
+    }
+
+    private static function invalidItem(array $fields): ?object
+    {
+        if ( array_key_exists('title', $fields) && trim((string) $fields['title']) === '' ){
+            return Response::error('Informe o título');
         }
 
         // o link vira href no menu de todos os usuários: só caminho interno ou http(s)
         // (bloqueia "javascript:", "data:" e afins)
-        if ( isset($payload['fields']['link']) && !self::isSafeLink((string) $payload['fields']['link']) ){
-            return $response->json(Response::error("Link inválido: use um caminho interno (/pagina) ou um endereço http(s)://"));
+        if ( isset($fields['link']) && !self::isSafeLink((string) $fields['link']) ){
+            return Response::error("Link inválido: use um caminho interno (/pagina) ou um endereço http(s)://");
         }
 
-        return $response->json(match ($operation) {
-            'create' => MenuItemService::create($payload['fields']),
-            'update' => MenuItemService::update($payload['id'], $payload['fields']),
-            'delete' => MenuItemService::delete($payload['id']),
-        });
+        return null;
     }
 
     private static function isSafeLink(string $link): bool
@@ -134,18 +163,9 @@ class MenuApi
         return (bool) preg_match('~^https?://[^\s/]+~i', $link) && filter_var($link, FILTER_VALIDATE_URL);
     }
 
-    /**
-     * ABSTRAÇÕES
-     */
-
-    public function getRolesData($request, $response)
+    /** "Menu Principal" → "menu_principal" */
+    private static function slug(string $name): string
     {
-        $roles = Roles::get();
-        $userGroups = UserGroup::get();
-
-        return $response->json(Response::success([
-            'roles' => $roles, 
-            'userGroups' => $userGroups->data
-        ]));
+        return str_replace(' ', '_', strtolower(Str::normalize($name)));
     }
 }

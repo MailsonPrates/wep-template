@@ -33,7 +33,14 @@ export default function UserInviteCreate() {
             <Form noValidate onSubmit={onSubmit} className={`p-2${saving ? " full-loading" : ""}`}>
                 <FormActions back="/admin/user/invite/" saving={saving} label="Enviar convite" />
                 <Field type="email" label="E-mail" autoFocus {...form.field("email")} />
-                <Field as="select" label="Grupo" placeholder="Selecione" loading={groups.loading} options={options} {...form.field("user_group_id")} />
+                <Field
+                    as="select"
+                    label="Grupo"
+                    placeholder="Selecione"
+                    loading={groups.loading}
+                    options={options}
+                    {...form.field("user_group_id")}
+                />
             </Form>
         </TemplateMain>
     );

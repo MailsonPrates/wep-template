@@ -2,7 +2,7 @@
 
 namespace App\Modules\User\Services;
 
-use App\Common\Tools\Image;
+use Wep\ImageCache;
 use App\Modules\User\User as Model;
 use Wep\Response;
 use Wep\Security\Token;
@@ -41,8 +41,8 @@ class UserService
             if ( $item['profile_image'] ){
 
                 $getUsers->data[$key]['profile_images'] = [
-                    'small' => Image::get($item['profile_image'], 36, 36),
-                    'medium' => Image::get($item['profile_image'], 200, 200)
+                    'small' => ImageCache::url((string) $item['profile_image'], 36, 36, ImageCache::COVER),
+                    'medium' => ImageCache::url((string) $item['profile_image'], 200, 200, ImageCache::COVER)
                 ];
 
             } else {

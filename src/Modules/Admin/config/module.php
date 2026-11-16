@@ -18,7 +18,6 @@ return [
     'routes' => [
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'path' => '/admin',
-        'methods' => [],
         'groups' => [
             [
                 'path' => '/',

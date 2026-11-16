@@ -6,9 +6,21 @@ import { user } from "core/user";
  * Página inicial de exemplo do template: troque o título, o subtítulo e os cartões pelos do app.
  */
 const CARDS = [
-    { title: "Título", icon: <HiOutlineMegaphone />, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
-    { title: "Título", icon: <HiOutlineTicket />, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
-    { title: "Título", icon: <HiOutlineSquares2X2 />, description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
+    {
+        title: "Título",
+        icon: <HiOutlineMegaphone />,
+        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    },
+    {
+        title: "Título",
+        icon: <HiOutlineTicket />,
+        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    },
+    {
+        title: "Título",
+        icon: <HiOutlineSquares2X2 />,
+        description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    },
 ].map((card, index) => ({ ...card, title: `${card.title} ${index + 1}` }));
 
 export default function Home() {

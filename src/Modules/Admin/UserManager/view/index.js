@@ -12,7 +12,10 @@ function UserItem({ item, onReset, onRemove }) {
 
     return (
         <div className="my-2 p-2 border shadow-sm rounded bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <Link className="text-reset d-flex align-items-center flex-wrap gap-2 flex-grow-1" to={`/admin/user/${item.user_id}/edit/`}>
+            <Link
+                className="text-reset d-flex align-items-center flex-wrap gap-2 flex-grow-1"
+                to={`/admin/user/${item.user_id}/edit/`}
+            >
                 <Avatar image={item.profile_images && item.profile_images.small} name={item.firstname || item.username} />
                 <span className="fw-medium">{name}</span>
                 <span className="text-secondary">{item.username}</span>
@@ -35,7 +38,7 @@ export default function UserManager() {
     const toast = useToast();
     const users = useApi(() => UserManagerApi.get(), [], { initial: [] });
 
-    const [remove, removing] = useAction((id) => UserManagerApi.delete(id), {
+    const [remove, removing] = useAction((id) => UserManagerApi.delete({ id }), {
         confirm: "Remover este usuário?",
         success: "Usuário removido",
     });
@@ -63,7 +66,12 @@ export default function UserManager() {
             actions={(
                 <>
                     <Link className="btn btn-outline-primary m-1" to="/admin/user/invite/create/">Convidar usuário</Link>
-                    <Link className="btn btn-primary m-1" to="/admin/user/create/"><HiMiniPlus className="fs-5" /> Novo usuário</Link>
+                    <Link
+                        className="btn btn-primary m-1"
+                        to="/admin/user/create/"
+                    >
+                        <HiMiniPlus className="fs-5" /> Novo usuário
+                    </Link>
                 </>
             )}
         >

@@ -16,9 +16,11 @@ class MenuItemService
      */
     public static function create(array $fields)
     {
-        if ( ($fields = self::prepare($fields)) instanceof \stdClass ) return $fields;
+        $fields = self::prepare($fields);
 
-        $create = DB::table('menu_items')->create(['fields' => $fields]);
+        if ( $fields instanceof \stdClass ) return $fields;
+
+        $create = DB::table(TABLE_MENU_ITEMS)->create(['fields' => $fields]);
 
         if ( !$create->error ) MenuService::buildMenusCache();
 
@@ -27,9 +29,11 @@ class MenuItemService
 
     public static function update($id, array $fields)
     {
-        if ( ($fields = self::prepare($fields)) instanceof \stdClass ) return $fields;
+        $fields = self::prepare($fields);
 
-        $update = DB::table('menu_items')->where('id', '=', $id)->update($fields);
+        if ( $fields instanceof \stdClass ) return $fields;
+
+        $update = DB::table(TABLE_MENU_ITEMS)->where('id', '=', $id)->update($fields);
 
         if ( !$update->error ) MenuService::buildMenusCache();
 
@@ -43,7 +47,7 @@ class MenuItemService
     {
         $ids = array_merge([(int) $id], self::descendants((int) $id));
 
-        $delete = DB::table('menu_items')->where('id', $ids)->delete();
+        $delete = DB::table(TABLE_MENU_ITEMS)->where('id', $ids)->delete();
 
         if ( !$delete->error ) MenuService::buildMenusCache();
 
@@ -60,7 +64,7 @@ class MenuItemService
 
         // por nível: uma consulta por profundidade, não por item
         while ( $parents ){
-            $children = DB::table('menu_items')->where('parent_id', $parents)->get('id');
+            $children = DB::table(TABLE_MENU_ITEMS)->where('parent_id', $parents)->get('id');
             $parents = array_map('intval', array_column($children->data ?? [], 'id'));
             $parents = array_values(array_diff($parents, $ids));
             $ids = array_merge($ids, $parents);

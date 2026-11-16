@@ -140,14 +140,30 @@ function reset() {
     mysql(`DROP DATABASE IF EXISTS \`${DB.name}\`; CREATE DATABASE \`${DB.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
 
     // estado limpo: trava da instalação, cache, uploads e tema
-    for (const item of ["storage/install.lock", "storage/cache", "public/assets/css/theme.css", "public/assets/images/logo", "public/assets/images/profile", "public/assets/images/cache"]) {
+    const generated = [
+        "storage/install.lock",
+        "storage/cache",
+        "public/assets/css/theme.css",
+        "public/assets/images/logo",
+        "public/assets/images/favicon",
+        "public/assets/images/profile",
+        "public/assets/images/cache",
+    ];
+
+    for (const item of generated) {
         fs.rmSync(path.join(SANDBOX, item), { recursive: true, force: true });
     }
 
     fs.copyFileSync(path.join(SANDBOX, "config/.env.example"), path.join(SANDBOX, "config/.env"));
 
     const answers = ["DEV", BASE, DB.host, DB.name, DB.user, DB.pass, ADMIN.name, ADMIN.username, ADMIN.password].join("\n") + "\n";
-    const result = run("php", [...phpArgs(), "app", "install"], { cwd: SANDBOX, input: answers, allowFail: true });
+    // o front é compilado à parte (build); o node_modules do sandbox é um link para o do template
+    const result = run("php", [...phpArgs(), "app", "install"], {
+        cwd: SANDBOX,
+        input: answers,
+        allowFail: true,
+        env: { ...process.env, WEP_SKIP_FRONT_BUILD: "1" },
+    });
     const output = `${result.stdout}${result.stderr}`;
 
     if (!/SUCESSO/.test(output)) throw new Error(`php app install falhou:\n${output.slice(-1500)}`);

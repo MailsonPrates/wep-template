@@ -10,12 +10,14 @@
 
 return [
     'middlewares' => [],
-    'constants' => [],
+    // tabelas usadas com DB::table()
+    'constants' => [
+        'TABLE_SETTING' => 'setting',
+    ],
     'title' => 'Visual',
     'routes' => [
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'path' => '/config/visual',
-        'methods' => [],
         'groups' => [
             [
                 'path' => '/',
@@ -29,17 +31,17 @@ return [
             [
                 'path' => '/colors',
                 'method' => 'saveColors',
-                'label' => 'salvar cores'
+                'label' => 'salvar cores e fontes'
             ],
             [
                 'path' => '/logo',
                 'method' => 'uploadLogo',
-                'label' => 'alterar logo'
+                'label' => 'alterar logos e favicon'
             ],
             [
                 'path' => '/logo/remove',
                 'method' => 'removeLogo',
-                'label' => 'restaurar logo padrão'
+                'label' => 'restaurar logo/favicon padrão'
             ],
         ]
     ],

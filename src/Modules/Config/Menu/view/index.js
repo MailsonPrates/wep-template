@@ -53,12 +53,26 @@ function ItemRow({ item, depth, onEdit, onAdd, onRemove, onSort }) {
             <div className={`px-3 py-2 d-flex align-items-center border-bottom${depth ? " bg-light" : ""}`}>
                 <span className="sortable-handle text-secondary me-2" title="Arraste para ordenar"><HiOutlineBars2 /></span>
                 {depth > 0 && <HiArrowTurnDownRight className="text-secondary me-2" style={{ marginLeft: (depth - 1) * 28 }} />}
-                <span className="me-2 fs-5 d-inline-flex" style={{ width: 22 }}>{item.icon_svg && <SvgIcon icon={item.icon_svg} />}</span>
-                <button type="button" className="btn btn-link text-reset text-decoration-none p-0 text-start flex-grow-1" onClick={() => onEdit(item)}>
+                <span
+                    className="me-2 fs-5 d-inline-flex"
+                    style={{ width: 22 }}
+                >
+                    {item.icon_svg && <SvgIcon icon={item.icon_svg} />}
+                </span>
+                <button
+                    type="button"
+                    className="btn btn-link text-reset text-decoration-none p-0 text-start flex-grow-1"
+                    onClick={() => onEdit(item)}
+                >
                     {item.title}
                     <span className="ms-2 fs-12 text-secondary">{TYPE_LABEL[item.type] || item.type}{item.link ? ` · ${item.link}` : ""}</span>
                 </button>
-                <button type="button" className="btn btn-link text-primary p-1" title="Adicionar subitem" onClick={() => onAdd(item)}>
+                <button
+                    type="button"
+                    className="btn btn-link text-primary p-1"
+                    title="Adicionar subitem"
+                    onClick={() => onAdd(item)}
+                >
                     <HiOutlinePlusCircle className="fs-5" />
                 </button>
                 <button type="button" className="btn btn-link text-danger p-1" title="Remover" onClick={() => onRemove(item)}>
@@ -68,7 +82,15 @@ function ItemRow({ item, depth, onEdit, onAdd, onRemove, onSort }) {
             {children.length > 0 && (
                 <SortableLevel items={children} depth={depth + 1} onSort={(list) => onSort(item.id, list)}>
                     {(child) => (
-                        <ItemRow key={child.id} item={child} depth={depth + 1} onEdit={onEdit} onAdd={onAdd} onRemove={onRemove} onSort={onSort} />
+                        <ItemRow
+                            key={child.id}
+                            item={child}
+                            depth={depth + 1}
+                            onEdit={onEdit}
+                            onAdd={onAdd}
+                            onRemove={onRemove}
+                            onSort={onSort}
+                        />
                     )}
                 </SortableLevel>
             )}
@@ -84,9 +106,15 @@ export default function Menu() {
     const [editingMenu, setEditingMenu] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
 
-    const [removeMenu, removingMenu] = useAction((id) => MenuApi.delete(id), { confirm: "Remover o menu e todos os itens?", success: "Menu removido" });
+    const [removeMenu, removingMenu] = useAction(
+        (id) => MenuApi.delete({ id }),
+        { confirm: "Remover o menu e todos os itens?", success: "Menu removido" }
+    );
     // antes o erro era testado em "remove.erro" (erro de digitação): falhas apareciam como sucesso
-    const [removeItem, removingItem] = useAction((id) => MenuApi.deleteItem(id), { confirm: "Remover o item e os subitens?", success: "Item removido" });
+    const [removeItem, removingItem] = useAction(
+        (id) => MenuApi.deleteItem({ id }),
+        { confirm: "Remover o item e os subitens?", success: "Item removido" }
+    );
     const [saveSort] = useAction((items) => MenuApi.sort({ items }));
 
     const toggleOpen = (id) => setOpenMenus((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -100,7 +128,9 @@ export default function Menu() {
     const onSort = (menu) => (parentId, list) => {
         menus.setData((all) => all.map((current) => {
             if (current.id !== menu.id) return current;
-            return parentId === 0 ? { ...current, child: list } : { ...current, child: replaceChildren(current.child || [], parentId, list) };
+            if (parentId === 0) return { ...current, child: list };
+
+            return { ...current, child: replaceChildren(current.child || [], parentId, list) };
         }));
 
         saveSort(list.map((item, index) => ({ id: item.id, sort_order: index })));
@@ -123,9 +153,16 @@ export default function Menu() {
         <TemplateMain
             title="Menus"
             breadcrumbs={["page.config"]}
-            actions={<Button variant="primary" className="m-1" onClick={() => setEditingMenu({})}><HiMiniPlus className="fs-5" /> Novo menu</Button>}
+            actions={
+                <Button variant="primary" className="m-1" onClick={() => setEditingMenu({})}>
+                    <HiMiniPlus className="fs-5" /> Novo menu
+                </Button>
+            }
         >
-            <div className={`w-md-75${loading ? " full-loading" : ""}`} style={loading && !list.length ? { minHeight: 120 } : undefined}>
+            <div
+                className={`w-md-75${loading ? " full-loading" : ""}`}
+                style={loading && !list.length ? { minHeight: 120 } : undefined}
+            >
                 {!list.length && !loading && <Empty message="Nenhum menu cadastrado" />}
 
                 {list.map((menu) => {
@@ -139,7 +176,12 @@ export default function Menu() {
 
                     return (
                         <div key={menu.id} className="border rounded mb-3 bg-white">
-                            <button type="button" className="btn w-100 d-flex align-items-center justify-content-between p-3 text-start" onClick={() => toggleOpen(menu.id)} aria-expanded={isOpen}>
+                            <button
+                                type="button"
+                                className="btn w-100 d-flex align-items-center justify-content-between p-3 text-start"
+                                onClick={() => toggleOpen(menu.id)}
+                                aria-expanded={isOpen}
+                            >
                                 <span className="fs-4 fw-semibold">{menu.name} <span className="fs-6 fw-normal text-secondary">({menu.slug})</span></span>
                                 {isOpen ? <HiChevronUp className="fs-4" /> : <HiChevronDown className="fs-4" />}
                             </button>
@@ -165,14 +207,26 @@ export default function Menu() {
                                         : <div className="p-4 text-center text-secondary bg-light">Nenhum item cadastrado</div>}
 
                                     <div className="px-2 py-1 d-flex align-items-center justify-content-between">
-                                        <Button variant="link" className="text-primary text-decoration-none" onClick={() => addItem(null)}>
+                                        <Button
+                                            variant="link"
+                                            className="text-primary text-decoration-none"
+                                            onClick={() => addItem(null)}
+                                        >
                                             <HiMiniPlus /> <span className="ms-1">Novo item</span>
                                         </Button>
                                         <div>
-                                            <Button variant="link" className="text-secondary text-decoration-none" onClick={() => onRemoveMenu(menu)}>
+                                            <Button
+                                                variant="link"
+                                                className="text-secondary text-decoration-none"
+                                                onClick={() => onRemoveMenu(menu)}
+                                            >
                                                 <HiOutlineTrash /> <span className="ms-1">Remover</span>
                                             </Button>
-                                            <Button variant="link" className="text-primary text-decoration-none" onClick={() => setEditingMenu(menu)}>
+                                            <Button
+                                                variant="link"
+                                                className="text-primary text-decoration-none"
+                                                onClick={() => setEditingMenu(menu)}
+                                            >
                                                 <HiOutlinePencilSquare /> <span className="ms-1">Editar</span>
                                             </Button>
                                         </div>

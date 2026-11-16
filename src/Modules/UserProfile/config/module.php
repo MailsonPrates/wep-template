@@ -17,7 +17,6 @@ return [
     'title' => 'Perfil do usuário',
     'routes' => [
         'path' => '/user/profile',
-        'methods' => [],
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'groups' => [
             [

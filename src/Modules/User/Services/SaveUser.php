@@ -43,7 +43,7 @@ class SaveUser
             if ( empty($data['password']) ){
                 unset($data['password']);
             } else {
-                $data['password'] = password_hash(html_entity_decode($data['password'], ENT_QUOTES, 'UTF-8'), PASSWORD_DEFAULT);
+                $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
             }
 
             return User::update([
@@ -53,7 +53,7 @@ class SaveUser
         }
 
         // Create
-        $data['password'] = password_hash(html_entity_decode($data['password'], ENT_QUOTES, 'UTF-8'), PASSWORD_DEFAULT);
+        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 
         return User::create([
             'fields' => $data

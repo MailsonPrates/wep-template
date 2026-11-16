@@ -2,158 +2,62 @@
 
 namespace App\Modules\Config\Visual\Services;
 
-use Wep\File;
-use Wep\Upload;
+use Wep\ImageCache;
 
 /**
- * Logo do app (Config > Visual).
+ * Logos do app (Config > Visual): o normal e a variação para fundo escuro.
  *
- *  - o original enviado fica em public/assets/images/logo/ (validado pelo Wep\Upload: só imagens,
- *    tipo pelo conteúdo);
- *  - o front usa a versão do cache, public/assets/images/cache/logo/logo-<hash>.webp, redimensionada
- *    para no máximo MAX_HEIGHT px de altura. Sem suporte a WebP no GD, o cache guarda uma cópia no
- *    formato original;
- *  - sem logo personalizado (ou depois de "Restaurar padrão"), vale o logo do template:
- *    public/assets/images/logo.png.
+ *  - o original fica em public/assets/images/logo/ (BrandImage);
+ *  - o site usa a versão .webp do Wep\ImageCache, com no máximo HEIGHT px de altura;
+ *  - sem logo personalizado, vale o do template (public/assets/images/logo.png);
+ *  - sem a variação escura, vale o logo normal.
+ *
+ *   Logo::url();             // logo normal
+ *   Logo::url('logo_dark');  // para fundo escuro (ex.: nav escura)
  */
 class Logo
 {
-    public const SETTING = 'visual.logo';
     public const DEFAULT = '/assets/images/logo.png';
-    private const MAX_HEIGHT = 240; // 4x a altura exibida (60px): nítido em telas de alta densidade
 
-    /** URL do logo usado no front. */
-    public static function url(): string
+    /** variação => setting */
+    public const VARIANTS = [
+        'logo' => 'visual.logo',
+        'logo_dark' => 'visual.logo_dark',
+    ];
+
+    private const HEIGHT = 240; // 4x a altura exibida (60px): nítido em telas de alta densidade
+
+    public static function url(string $variant = 'logo'): string
     {
-        $logo = Settings::get(self::SETTING);
-        $cache = is_array($logo) ? (string) ($logo['cache'] ?? '') : '';
+        $original = BrandImage::original(self::setting($variant));
+        $url = $original !== null ? ImageCache::url($original, 0, self::HEIGHT) : null;
 
-        if ( $cache !== '' && is_file(self::imagesDir() . $cache) ){
-            return '/assets/images' . $cache . '?v=' . filemtime(self::imagesDir() . $cache);
-        }
+        if ( $url !== null ) return $url;
 
-        return self::DEFAULT;
+        return $variant === 'logo' ? self::DEFAULT : self::url('logo');
     }
 
-    public static function isCustom(): bool
+    public static function isCustom(string $variant = 'logo'): bool
     {
-        return self::url() !== self::DEFAULT;
+        return BrandImage::original(self::setting($variant)) !== null;
     }
 
     /**
      * @param array|null $file item de $_FILES
      * @return string|null mensagem de erro
      */
-    public static function upload(?array $file): ?string
+    public static function upload(?array $file, string $variant = 'logo'): ?string
     {
-        try {
-            $original = Upload::image([
-                'file' => $file,
-                'directory' => '/logo',
-                'prefix' => 'logo',
-                'max_size' => 2 * 1024 * 1024,
-            ]);
-        } catch (\Throwable $e) {
-            return $e->getMessage();
-        }
-
-        $cache = self::buildCache($original);
-
-        if ( $cache === null ){
-            @unlink($original);
-            return 'Não foi possível processar a imagem';
-        }
-
-        $previous = Settings::get(self::SETTING);
-
-        if ( !Settings::set(self::SETTING, [
-            'original' => Upload::relative($original),
-            'cache' => Upload::relative($cache),
-        ]) ){
-            @unlink($original);
-            @unlink($cache);
-            return 'Não foi possível salvar o logo';
-        }
-
-        self::deleteFiles($previous);
-
-        return null;
+        return BrandImage::save(self::setting($variant), $file, '/logo', $variant === 'logo' ? 'logo' : 'logo-dark');
     }
 
-    /** Volta para o logo padrão do template (apaga o original e o cache do personalizado). */
-    public static function restore(): ?string
+    public static function restore(string $variant = 'logo'): ?string
     {
-        $previous = Settings::get(self::SETTING);
-
-        if ( !Settings::forget(self::SETTING) ) return 'Não foi possível restaurar o logo';
-
-        self::deleteFiles($previous);
-
-        return null;
+        return BrandImage::restore(self::setting($variant));
     }
 
-    /**
-     * Gera a versão do front: WebP redimensionado (ou cópia, sem GD/WebP).
-     *
-     * @return string|null caminho do arquivo gerado
-     */
-    private static function buildCache(string $original): ?string
+    private static function setting(string $variant): string
     {
-        $dir = self::imagesDir() . '/cache/logo';
-
-        if ( !File::ensureDir($dir) ) return null;
-
-        $hash = substr(sha1_file($original) ?: bin2hex(random_bytes(8)), 0, 16);
-        $canWebp = function_exists('imagewebp') && function_exists('imagecreatefromstring');
-
-        if ( !$canWebp ){
-            $target = "$dir/logo-$hash." . pathinfo($original, PATHINFO_EXTENSION);
-            return copy($original, $target) ? $target : null;
-        }
-
-        $source = @imagecreatefromstring((string) file_get_contents($original));
-
-        if ( $source === false ) return null;
-
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $scale = $height > self::MAX_HEIGHT ? self::MAX_HEIGHT / $height : 1;
-        $newWidth = max(1, (int) round($width * $scale));
-        $newHeight = max(1, (int) round($height * $scale));
-
-        // transparência preservada (PNG/WebP com fundo transparente)
-        $image = imagecreatetruecolor($newWidth, $newHeight);
-        imagealphablending($image, false);
-        imagesavealpha($image, true);
-        imagefill($image, 0, 0, imagecolorallocatealpha($image, 0, 0, 0, 127));
-        imagecopyresampled($image, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-
-        $target = "$dir/logo-$hash.webp";
-        $ok = imagewebp($image, $target, 90);
-
-        unset($image, $source);
-
-        return $ok ? $target : null;
-    }
-
-    private static function deleteFiles($logo): void
-    {
-        if ( !is_array($logo) ) return;
-
-        foreach( ['original', 'cache'] as $key ){
-            $relative = (string) ($logo[$key] ?? '');
-
-            // só arquivos dentro de assets/images (o valor vem do banco)
-            if ( $relative === '' || str_contains($relative, '..') ) continue;
-
-            $file = self::imagesDir() . $relative;
-
-            if ( is_file($file) ) @unlink($file);
-        }
-    }
-
-    private static function imagesDir(): string
-    {
-        return rtrim(DIR_ASSETS, '/\\') . '/images';
+        return self::VARIANTS[$variant] ?? self::VARIANTS['logo'];
     }
 }

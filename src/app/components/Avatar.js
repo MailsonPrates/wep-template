@@ -7,7 +7,7 @@ export default function Avatar({ image, name = "", size = 36, className = "" }) 
 
     return (
         <span
-            className={`nav-avatar border ${className}`}
+            className={`nav-avatar ${className}`}
             style={{
                 width: size,
                 height: size,

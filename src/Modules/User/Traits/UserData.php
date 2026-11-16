@@ -2,7 +2,7 @@
 
 namespace App\Modules\User\Traits;
 
-use App\Common\Tools\Image;
+use Wep\ImageCache;
 use Wep\Session;
 use App\Modules\Admin\UserGroup\Services\Roles;
 use App\Modules\Config\Menu\Services\MenuService;
@@ -96,8 +96,8 @@ trait UserData
             'nickname' => $user['nickname'],
             'created_at' => date("d/m/Y", strtotime($user['created_at'])),
             'profile_images' => [
-                'small' => Image::get($user['profile_image'], 36, 36),
-                'medium' => Image::get($user['profile_image'], 200, 200)
+                'small' => ImageCache::url((string) $user['profile_image'], 36, 36, ImageCache::COVER),
+                'medium' => ImageCache::url((string) $user['profile_image'], 200, 200, ImageCache::COVER)
             ],
             'is_logged' => true,
         ];

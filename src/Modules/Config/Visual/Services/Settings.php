@@ -37,7 +37,7 @@ class Settings
     {
         $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $save = DB::table('setting')
+        $save = DB::table(TABLE_SETTING)
             ->onDuplicateUpdate('value')
             ->insert(['name' => $name, 'value' => $json]);
 
@@ -48,7 +48,7 @@ class Settings
 
     public static function forget(string $name): bool
     {
-        $delete = DB::table('setting')->where('name', $name)->delete();
+        $delete = DB::table(TABLE_SETTING)->where('name', $name)->delete();
 
         Cache::delete(self::CACHE_KEY);
 
@@ -62,7 +62,7 @@ class Settings
 
         if ( is_array($cached) ) return $cached;
 
-        $rows = DB::table('setting')->get('name', 'value');
+        $rows = DB::table(TABLE_SETTING)->get('name', 'value');
 
         // banco indisponível (ex.: antes da instalação): usa os padrões sem guardar no cache
         if ( $rows->error ){

@@ -22,10 +22,19 @@ export default function UserForm({ id, onSaved }) {
     const isUpdate = Boolean(id);
 
     const groups = useApi(() => UserGroupApi.get(), [], { initial: [] });
-    const user = useApi(() => UserManagerApi.get(id), [id], { enabled: isUpdate });
+    const user = useApi(() => UserManagerApi.get({ id }), [id], { enabled: isUpdate });
 
     const form = useForm(
-        { status: "ativado", firstname: "", lastname: "", username: "", nickname: "", email: "", user_group_id: "", password: "" },
+        {
+            status: "ativado",
+            firstname: "",
+            lastname: "",
+            username: "",
+            nickname: "",
+            email: "",
+            user_group_id: "",
+            password: "",
+        },
         {
             firstname: { required: "Informe o nome" },
             lastname: { required: "Informe o sobrenome" },

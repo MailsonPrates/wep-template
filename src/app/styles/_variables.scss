@@ -9,8 +9,14 @@ $enable-shadows: false;
 $link-decoration: none;
 $form-floating-label-opacity: .75;
 
+// dropdowns (menu do usuário na nav) e breadcrumb: cinzas fixos, fora do tema
+$dropdown-link-color: #7c7c7c;
+$dropdown-link-hover-color: #595959;
+$dropdown-link-active-color: #212529;
+$dropdown-link-active-bg: #ededed;
+$breadcrumb-active-color: #7c7c7c;
+
 // app
 $sidebar-width: 250px;
 $sidebar-width-collapsed: 64px;
 $menu-link-color: #6c6c6c;
-$loading-color: $primary;

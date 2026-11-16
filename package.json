@@ -5,7 +5,7 @@
   "description": "",
   "scripts": {
     "dev": "webpack",
-    "prod": "webpack --config webpack.config.js --mode production",
+    "prod": "node webpack/ensure-deps.js && webpack --config webpack.config.js --mode production",
     "icons": "node webpack/icons-catalog.js",
     "e2e": "node tests/e2e/sandbox.js test",
     "sandbox": "node tests/e2e/sandbox.js"
@@ -28,12 +28,12 @@
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
     "babel-loader": "^9.2.1",
+    "babel-plugin-react-compiler": "^1.0.0",
     "chokidar": "^4.0.3",
     "css-loader": "^6.7.1",
     "eslint": "^8.0.0",
     "eslint-config-react-app": "^7.0.1",
     "mini-css-extract-plugin": "^2.9.4",
-    "react-compiler-webpack": "^0.1.2",
     "sass": "^1.50.0",
     "sass-loader": "^12.6.0",
     "style-loader": "^3.3.1",

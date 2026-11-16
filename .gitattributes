@@ -15,3 +15,4 @@
 
 # Fora do pacote baixado pelo composer create-project
 /tests export-ignore
+/CLAUDE.md export-ignore

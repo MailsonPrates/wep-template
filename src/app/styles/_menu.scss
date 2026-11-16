@@ -51,6 +51,20 @@
                 &.active .i-caret,
                 &:hover .i-caret { display: block; }
             }
+
+            // rota e link externo (não abrem filhos): sem fundo cinza, só o texto mais forte
+            &.item-route,
+            &.item-external_link {
+                > .menu-item-link {
+                    &.active,
+                    &:hover {
+                        background: none;
+                        color: $body-color;
+                    }
+
+                    &.active .menu-title { font-weight: 600 !important; }
+                }
+            }
         }
 
         &.item-child {

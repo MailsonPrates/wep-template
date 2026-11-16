@@ -12,10 +12,10 @@ return [
     'db' => [
         'table' => 'user',
     ],
-    // CRUD automático: o front só envia id e campos (contrato em Wep\Api\ClientPayload)
+    // opções do Model (find, updateById, deleteById...). Sem 'methods' nas rotas não há CRUD
+    // automático: o front só chama as rotas declaradas abaixo.
     'api' => [
         'primary_key' => 'user_id',
-        'hidden' => ['code'],
     ],
     'middlewares' => [
         
@@ -24,7 +24,6 @@ return [
     'title' => 'Usuários',
     'routes' => [
         'path' => '/user',
-        'methods' => [],
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'groups' => [
 

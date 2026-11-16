@@ -1,4 +1,4 @@
-import { Badge, Col, Row } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 
 /**
  * Permissões do grupo por módulo → páginas → funções (APIs da página).
@@ -56,7 +56,11 @@ export default function RolesPicker({ modules = [], value = [], onChange }) {
         <div className="border p-3 rounded bg-light">
             {modules.filter((module) => (module.pages || []).length).map((module, index) => (
                 <div key={module.module_name} className={`roles-module${index > 0 ? " border-top pt-3" : ""}`}>
-                    <button type="button" className="btn btn-link text-reset text-decoration-none p-0 mb-2 fw-semibold fs-4" onClick={() => toggleModule(module)}>
+                    <button
+                        type="button"
+                        className="btn btn-link text-reset text-decoration-none p-0 mb-2 fw-semibold fs-4"
+                        onClick={() => toggleModule(module)}
+                    >
                         {module.module_title || module.module_name}
                     </button>
                     <Row>
@@ -66,9 +70,13 @@ export default function RolesPicker({ modules = [], value = [], onChange }) {
                             return (
                                 <Col key={page.role} md={6} className="mb-3">
                                     <div className="border p-2 rounded-3 bg-white h-100">
-                                        <button type="button" className="btn btn-link text-reset text-decoration-none p-0 text-start" onClick={() => togglePage(page)}>
-                                            <Badge bg={pageSelected ? "primary" : "secondary"} className="me-2" style={{ fontSize: 9 }}>Página</Badge>
-                                            <span className={pageSelected ? "fw-semibold text-success" : ""}>{page.title || page.role}</span>
+                                        <button
+                                            type="button"
+                                            className="btn btn-link text-reset text-decoration-none p-0 text-start"
+                                            onClick={() => togglePage(page)}
+                                        >
+                                            <span className={`roles-badge me-2${pageSelected ? " is-on" : ""}`}>Página</span>
+                                            <span className={pageSelected ? "fw-semibold text-success" : "roles-off"}>{page.title || page.role}</span>
                                         </button>
                                         {(page.methods || []).length > 0 && (
                                             <div className="mt-2">
@@ -80,9 +88,9 @@ export default function RolesPicker({ modules = [], value = [], onChange }) {
                                                             key={method.role}
                                                             type="button"
                                                             onClick={() => toggleMethod(method, page)}
-                                                            className={`btn btn-sm d-inline-flex align-items-center rounded-3 px-2 m-1 border ${methodSelected ? "text-success border-success-subtle" : "border-white text-secondary"}`}
+                                                            className={`btn btn-sm d-inline-flex align-items-center rounded-3 px-2 m-1 border ${methodSelected ? "text-success border-success-subtle" : "border-white roles-off"}`}
                                                         >
-                                                            <Badge bg={methodSelected ? "success" : "secondary"} className="me-2" style={{ fontSize: 8 }}>Função</Badge>
+                                                            <span className={`roles-badge roles-badge-sm me-2${methodSelected ? " is-on" : ""}`}>Função</span>
                                                             {method.title || method.role}
                                                         </button>
                                                     );

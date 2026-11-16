@@ -5,6 +5,7 @@ namespace App\Modules\Config\Menu\Services;
 use Wep\Cache;
 use Wep\DB;
 use App\Modules\Admin\UserGroup\Services\Roles;
+use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\Config\Menu\Menu;
 
 /**
@@ -49,7 +50,7 @@ class MenuService
 
     public static function delete($id)
     {
-        $deleteItems = DB::table('menu_items')->delete([
+        $deleteItems = DB::table(TABLE_MENU_ITEMS)->delete([
             'where' => [['menu_id', '=', $id]]
         ]);
 
@@ -67,7 +68,7 @@ class MenuService
      */
     public static function sort($items)
     {
-        $table = DB::table('menu_items');
+        $table = DB::table(TABLE_MENU_ITEMS);
 
         foreach( (array) $items as $item ){
             $id = (int) ($item['id'] ?? 0);
@@ -88,7 +89,7 @@ class MenuService
 
         if ( $getMenus->error ) return [];
 
-        $getItems = DB::table('menu_items')->orderBy('sort_order')->get();
+        $getItems = DB::table(TABLE_MENU_ITEMS)->orderBy('sort_order')->get();
         $paths = self::pathsByRole();
 
         // itens agrupados por menu e por pai (duas consultas no total; antes uma por item)
@@ -122,7 +123,7 @@ class MenuService
      */
     public static function buildUserGroupMenus($menus = [])
     {
-        $groups = DB::table('user_group')->get('user_group_id', 'roles');
+        $groups = UserGroup::get(['fields' => ['user_group_id', 'roles']]);
         $result = [];
 
         foreach( $groups->data ?? [] as $group ){

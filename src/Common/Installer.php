@@ -76,7 +76,30 @@ class Installer implements InstallerContract
 
         if ( $menu->error ) return $menu;
 
+        self::buildFront();
+
         return $admin;
+    }
+
+    /**
+     * Dependências e build do front (npm run prod: roda `npm ci` só se o node_modules estiver
+     * faltando ou desatualizado). Uma falha aqui não desfaz a instalação: só avisa.
+     * WEP_SKIP_FRONT_BUILD=1 pula a etapa (ex.: sandbox de testes, que compila à parte).
+     */
+    private static function buildFront(): void
+    {
+        if ( getenv('WEP_SKIP_FRONT_BUILD') ) return;
+
+        if ( !is_file(DIR_ROOT . '/package.json') ) return;
+
+        echo PHP_EOL . 'Front: npm run prod (instala as dependências se precisar e compila)...' . PHP_EOL;
+
+        $process = proc_open('npm run prod', [STDIN, STDOUT, STDERR], $pipes, DIR_ROOT);
+        $code = is_resource($process) ? proc_close($process) : 1;
+
+        if ( $code !== 0 ){
+            echo 'Aviso: o build do front falhou. Rode "npm ci" e "npm run prod" na pasta do projeto.' . PHP_EOL;
+        }
     }
 
     /**
@@ -109,7 +132,7 @@ class Installer implements InstallerContract
                 // página removida do template: o item não é criado (em vez de um link quebrado)
                 if ( $item['type'] === 'route' && !isset($pages[$item['permission']]) ) continue;
 
-                $create = DB::table('menu_items')->create(['fields' => [
+                $create = DB::table(TABLE_MENU_ITEMS)->create(['fields' => [
                     'menu_id' => (int) $menu->last_id,
                     'parent_id' => $parentId,
                     'title' => $item['title'],
@@ -131,7 +154,9 @@ class Installer implements InstallerContract
             return null;
         };
 
-        if ( $error = $insert(self::DEFAULT_MENU, 0) ) return $error;
+        $error = $insert(self::DEFAULT_MENU, 0);
+
+        if ( $error ) return $error;
 
         MenuService::buildMenusCache();
         Roles::buildRolesByUserGroupCache();

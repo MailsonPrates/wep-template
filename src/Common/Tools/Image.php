@@ -345,46 +345,10 @@ class Image {
 		return array($r, $g, $b);
 	}
 
+	/**
+	 * @deprecated use Wep\ImageCache::url() (versão .webp em cache; o original fica intacto)
+	 */
 	public static function get($filename, $width, $height) {
-
-		$dir_image = DIR_ASSETS . '/images';
-
-		// o arquivo precisa estar DENTRO de assets/images: o prefixo é comparado com "/" no fim
-		// (antes "assets/images_outra/..." também passava)
-		$base = rtrim(str_replace('\\', '/', (string) realpath($dir_image)), '/') . '/';
-		$real = str_replace('\\', '/', (string) realpath($dir_image . $filename));
-
-		if (!$filename || !is_file($dir_image . $filename) || $base === '/' || !str_starts_with($real, $base)) {
-			return;
-		}
-
-		$extension = pathinfo($filename, PATHINFO_EXTENSION);
-
-		$image_old = $filename;
-		$image_new = '/cache' . Str::substr($filename, 0, Str::strrpos($filename, '.')) . '-' . $width . 'x' . $height . '.' . $extension;
-
-		if (!is_file($dir_image . $image_new) || (filemtime($dir_image . $image_old) > filemtime($dir_image . $image_new))) {
-			list($width_orig, $height_orig, $image_type) = getimagesize($dir_image . $image_old);
-
-			if (!in_array($image_type, array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF, IMAGETYPE_WEBP))) {
-				return $dir_image . $image_old;
-			}
- 
-			// sem permissão de escrita para todos (antes 0777)
-			\Wep\File::ensureDir(dirname($dir_image . $image_new));
-
-			if ($width_orig != $width || $height_orig != $height) {
-				$image = new self($dir_image . $image_old);
-				$image->resize($width, $height);
-				$image->save($dir_image . $image_new);
-			} else {
-				copy($dir_image . $image_old, $dir_image . $image_new);
-			}
-		}
-
-		$image_path = $dir_image . $image_new;
-		$image_path = explode('/public', $image_path)[1];
-
-		return $image_path;
+		return \Wep\ImageCache::url((string) $filename, (int) $width, (int) $height, \Wep\ImageCache::COVER);
 	}
 }

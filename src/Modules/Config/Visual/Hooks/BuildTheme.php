@@ -19,7 +19,9 @@ class BuildTheme
         // sem banco as cores viriam vazias: regravar apagaria o tema personalizado
         if ( Settings::unavailable() ) throw new \RuntimeException('banco indisponível, theme.css mantido como está');
 
-        if ( !File::putAtomic(Theme::file(), Theme::css($colors)) ){
+        $written = File::putAtomic(Theme::file(), Theme::css($colors, Theme::text()));
+
+        if ( !$written ){
             throw new \RuntimeException('Não foi possível gravar public/assets/css/theme.css');
         }
     }

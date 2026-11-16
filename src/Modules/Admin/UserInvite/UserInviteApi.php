@@ -1,33 +1,44 @@
 <?php
- 
+
 namespace App\Modules\Admin\UserInvite;
- 
+
 use Wep\Controller;
 use Wep\Response;
+use Wep\Router\Http\RouterHttpRequest;
+use Wep\Security\RateLimiter;
 use App\Modules\Admin\UserGroup\UserGroup;
 use App\Modules\User\Services\SaveUser;
 use App\Modules\User\Services\Username;
 use App\Modules\Admin\UserInvite\Services\UserInviteService;
-use Wep\Api\InvalidPayloadException;
-use Wep\Security\RateLimiter;
 
 /**
- * Classe controller responsável por implementar métodos
- * que lidam com as requisições vindas do front
+ * Convites. Admin: get, create, update (cancelar), delete, resend. Público (cadastro do convidado):
+ * validate, registerUser, validateUsername, com limite de tentativas por IP.
  */
 class UserInviteApi
 {
     use Controller;
 
-    public function get($request, $response)
+    /**
+     * Rotas públicas (cadastro do convidado): limite de tentativas por IP.
+     */
+    private const PUBLIC_MAX_ATTEMPTS = 30;
+    private const PUBLIC_DECAY = 900;
+
+    /**
+     * get(): lista; get({id}): um convite. Com o nome do grupo de cada convite.
+     */
+    public function get(RouterHttpRequest $request, Response $response)
     {
-        $getUserInvite = UserInvite::fromClient('get');
+        $id = (int) ($request->id ?? 0);
+
+        $getUserInvite = $id
+            ? UserInvite::find($id)
+            : UserInvite::get(['orderBy' => ['user_invite_id', 'DESC']]);
 
         if ( $getUserInvite->error || empty($getUserInvite->data) ) return $response->json($getUserInvite);
 
-        // get(id) devolve um registro; get() devolve a lista
-        $isSingle = !array_is_list($getUserInvite->data);
-        $invites = $isSingle ? [$getUserInvite->data] : $getUserInvite->data;
+        $invites = $id ? [$getUserInvite->data] : $getUserInvite->data;
 
         // nomes dos grupos em uma consulta (antes: uma consulta por convite)
         $groupIds = array_values(array_unique(array_column($invites, 'user_group_id')));
@@ -41,20 +52,66 @@ class UserInviteApi
             $invites[$index]['user_group_name'] = $groupNames[$invite['user_group_id']] ?? "";
         }
 
-        $getUserInvite->data = $isSingle ? $invites[0] : $invites;
+        $getUserInvite->data = $id ? $invites[0] : $invites;
 
         return $response->json($getUserInvite);
     }
- 
-    /**
-     * Rotas públicas (cadastro do convidado): limite de tentativas por IP.
-     */
-    private const PUBLIC_MAX_ATTEMPTS = 30;
-    private const PUBLIC_DECAY = 900;
 
-    public function validate($request, $response, $userInvite = null)
+    public function create(RouterHttpRequest $request, Response $response)
     {
-        if ( $limited = self::rateLimited($request, 'invite-validate') ) return $response->json($limited);
+        return $response->json(UserInviteService::create([
+            'email' => trim((string) ($request->email ?? '')),
+            'user_group_id' => (int) ($request->user_group_id ?? 0),
+        ]));
+    }
+
+    /**
+     * O único update permitido é cancelar um convite pendente: update({id, status: "cancelled"}).
+     */
+    public function update(RouterHttpRequest $request, Response $response)
+    {
+        $id = (int) ($request->id ?? 0);
+
+        if ( ($request->status ?? '') !== 'cancelled' ){
+            return $response->json(Response::error('Só é possível cancelar o convite'));
+        }
+
+        $invite = $id ? UserInvite::find($id) : null;
+
+        if ( !$invite || $invite->error || empty($invite->data) ){
+            return $response->json(Response::error('Convite não encontrado'));
+        }
+
+        if ( ($invite->data['status'] ?? '') !== 'pending' ){
+            return $response->json(Response::error('Só convites pendentes podem ser cancelados'));
+        }
+
+        return $response->json(UserInvite::updateById($id, ['status' => 'cancelled']));
+    }
+
+    public function delete(RouterHttpRequest $request, Response $response)
+    {
+        $id = (int) ($request->id ?? 0);
+
+        if ( !$id ) return $response->json(Response::error('Convite não encontrado'));
+
+        return $response->json(UserInvite::deleteById($id));
+    }
+
+    public function resend(RouterHttpRequest $request, Response $response)
+    {
+        $id = (int) ($request->user_invite_id ?? 0);
+
+        if ( $id <= 0 ) return $response->json(Response::error('Convite não encontrado'));
+
+        return $response->json(UserInviteService::resend(['user_invite_id' => $id]));
+    }
+
+    public function validate(RouterHttpRequest $request, Response $response)
+    {
+        $limited = self::rateLimited($request, 'invite-validate');
+
+        if ( $limited ) return $response->json($limited);
 
         [$invite, $error] = self::pendingInvite((string) ($request->token ?? ''));
 
@@ -64,12 +121,12 @@ class UserInviteApi
     /**
      * Cadastro pelo convite. O convite é reservado (pending → used) de forma atômica ANTES de
      * criar o usuário: duas requisições simultâneas com o mesmo token não criam duas contas.
-     * Antes não havia verificação de status nem de validade (token usado/expirado criava contas)
-     * e o cadastro gravava a coluna "active", que não existe.
      */
-    public function registerUser($request, $response, $userInvite = null)
+    public function registerUser(RouterHttpRequest $request, Response $response)
     {
-        if ( $limited = self::rateLimited($request, 'invite-register') ) return $response->json($limited);
+        $limited = self::rateLimited($request, 'invite-register');
+
+        if ( $limited ) return $response->json($limited);
 
         $token = (string) ($request->token ?? '');
 
@@ -113,20 +170,20 @@ class UserInviteApi
         return $response->json($registerUser);
     }
 
-    public function validateUsername($request, $response)
+    public function validateUsername(RouterHttpRequest $request, Response $response)
     {
-        if ( $limited = self::rateLimited($request, 'invite-username') ) return $response->json($limited);
+        $limited = self::rateLimited($request, 'invite-username');
 
-        $username = $request->username ?? "";
+        if ( $limited ) return $response->json($limited);
 
         try {
-            Username::check($username);
+            Username::check($request->username ?? "");
 
             return $response->json(Response::success());
 
         } catch (\Throwable $th) {
             return $response->json(Response::error($th->getMessage()));
-       }
+        }
     }
 
     /**
@@ -164,7 +221,7 @@ class UserInviteApi
         return [$invite, null];
     }
 
-    private static function rateLimited($request, string $action)
+    private static function rateLimited(RouterHttpRequest $request, string $action)
     {
         $limiter = RateLimiter::make();
         $key = "$action:" . $request->ip();
@@ -177,49 +234,4 @@ class UserInviteApi
 
         return null;
     }
-
-    public function create($request, $response)
-    {
-        try {
-            $payload = UserInvite::clientPayload('create');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
-
-        return $response->json(UserInviteService::create($payload['fields']));
-    }
-
-    /**
-     * O único update permitido é cancelar um convite pendente.
-     */
-    public function update($request, $response)
-    {
-        try {
-            $payload = UserInvite::clientPayload('update');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
-
-        if ( ($payload['fields'] ?? []) !== ['status' => 'cancelled'] ){
-            return $response->json(Response::error('Só é possível cancelar o convite'));
-        }
-
-        $invite = UserInvite::find($payload['id']);
-
-        if ( $invite->error || empty($invite->data) ) return $response->json(Response::error('Convite não encontrado'));
-
-        if ( ($invite->data['status'] ?? '') !== 'pending' ) return $response->json(Response::error('Só convites pendentes podem ser cancelados'));
-
-        return $response->json(UserInvite::updateById($payload['id'], ['status' => 'cancelled']));
-    }
-
-    public function resend($request, $response)
-    {
-        $id = (int) ($request->user_invite_id ?? 0);
-
-        if ( $id <= 0 ) return $response->json(Response::error('Convite não encontrado'));
-
-        return $response->json(UserInviteService::resend(['user_invite_id' => $id]));
-    }
-
 }

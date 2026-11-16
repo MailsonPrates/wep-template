@@ -25,10 +25,19 @@ function Status({ status }) {
 export default function UserInvite() {
     const invites = useApi(() => UserInviteApi.get(), [], { initial: [] });
 
-    const [remove, removing] = useAction((id) => UserInviteApi.delete(id), { confirm: "Remover este convite?", success: "Convite removido" });
-    const [cancel, cancelling] = useAction((id) => UserInviteApi.update(id, { status: "cancelled" }), { confirm: "Cancelar este convite?", success: "Convite cancelado" });
+    const [remove, removing] = useAction(
+        (id) => UserInviteApi.delete({ id }),
+        { confirm: "Remover este convite?", success: "Convite removido" }
+    );
+    const [cancel, cancelling] = useAction(
+        (id) => UserInviteApi.update({ id, status: "cancelled" }),
+        { confirm: "Cancelar este convite?", success: "Convite cancelado" }
+    );
     // antes chamava "resendUserInvite", que não existia (e não havia rota para reenviar)
-    const [resend, resending] = useAction((id) => UserInviteApi.resend({ user_invite_id: id }), { confirm: "Reenviar o convite por e-mail?", success: "Convite reenviado" });
+    const [resend, resending] = useAction(
+        (id) => UserInviteApi.resend({ user_invite_id: id }),
+        { confirm: "Reenviar o convite por e-mail?", success: "Convite reenviado" }
+    );
 
     const list = Array.isArray(invites.data) ? invites.data : (invites.data ? [invites.data] : []);
     const loading = invites.loading || removing.loading || cancelling.loading || resending.loading;
@@ -47,14 +56,21 @@ export default function UserInvite() {
         <TemplateMain
             title="Convites de usuários"
             breadcrumbs={["page.admin"]}
-            actions={<Link className="btn btn-primary m-1" to="/admin/user/invite/create/"><HiMiniPlus className="fs-5" /> Novo convite</Link>}
+            actions={
+                <Link className="btn btn-primary m-1" to="/admin/user/invite/create/">
+                    <HiMiniPlus className="fs-5" /> Novo convite
+                </Link>
+            }
         >
             <ListState loading={loading} items={list} empty="Nenhum convite enviado">
                 {(item) => {
                     const isPending = item.status === "pending";
 
                     return (
-                        <div key={item.user_invite_id} className="my-2 p-2 border shadow-sm rounded bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div
+                            key={item.user_invite_id}
+                            className="my-2 p-2 border shadow-sm rounded bg-white d-flex flex-wrap align-items-center justify-content-between gap-2"
+                        >
                             <div className="d-flex flex-wrap align-items-center gap-3">
                                 <Status status={item.status} />
                                 <span>{item.email}</span>
@@ -63,10 +79,27 @@ export default function UserInvite() {
                             <div className="d-flex flex-wrap gap-1">
                                 {isPending && (
                                     <>
-                                        <Button variant="outline-secondary" size="sm" onClick={() => onCancel(item.user_invite_id)}>Cancelar</Button>
-                                        <Button variant="outline-primary" size="sm" onClick={() => resend(item.user_invite_id)}>Reenviar</Button>
+                                        <Button
+                                            variant="outline-secondary"
+                                            size="sm"
+                                            onClick={() => onCancel(item.user_invite_id)}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            onClick={() => resend(item.user_invite_id)}
+                                        >
+                                            Reenviar
+                                        </Button>
                                         {/* antes apontava para /user/invite/signup/..., que não existe (404) */}
-                                        <a className="btn btn-outline-dark btn-sm" href={`/admin/user/invite/signup/${encodeURIComponent(item.token)}/`} target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            className="btn btn-outline-dark btn-sm"
+                                            href={`/admin/user/invite/signup/${encodeURIComponent(item.token)}/`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             <HiOutlineLink /> Link
                                         </a>
                                     </>

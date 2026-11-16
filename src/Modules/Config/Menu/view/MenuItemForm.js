@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { Button, Form, Offcanvas } from "react-bootstrap";
 import { MenuApi } from "api";
 import { Field, IconPicker } from "components";
@@ -47,7 +47,7 @@ export default function MenuItemForm({ item, options, loadingOptions, onClose, o
         });
     }, [item]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const pages = useMemo(() => routeOptions((options && options.roles) || []), [options]);
+    const pages = routeOptions((options && options.roles) || []);
     const userGroups = (options && options.userGroups) || [];
     const { type, user_groups: selectedGroups } = form.values;
 
@@ -59,7 +59,7 @@ export default function MenuItemForm({ item, options, loadingOptions, onClose, o
     };
 
     const [save, { loading }] = useAction(
-        (fields) => (isUpdate ? MenuApi.updateItem(item.id, fields) : MenuApi.createItem(fields)),
+        (fields) => (isUpdate ? MenuApi.updateItem({ id: item.id, ...fields }) : MenuApi.createItem(fields)),
         { success: "Item salvo" }
     );
 

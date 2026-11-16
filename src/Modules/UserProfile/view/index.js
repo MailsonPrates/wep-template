@@ -23,12 +23,22 @@ export default function UserProfile() {
     const [imageRemoved, setImageRemoved] = useState(false);
 
     const form = useForm(
-        { firstname: current.firstname || "", lastname: current.lastname || "", nickname: current.nickname || "", password: "", confirmPassword: "" },
+        {
+            firstname: current.firstname || "",
+            lastname: current.lastname || "",
+            nickname: current.nickname || "",
+            password: "",
+            confirmPassword: "",
+        },
         {
             firstname: { required: "Informe o nome" },
             lastname: { required: "Informe o sobrenome" },
             password: { minLength: [MIN_PASSWORD, `Mínimo de ${MIN_PASSWORD} caracteres`] },
-            confirmPassword: { validate: (value, values) => (values.password && value !== values.password ? "As senhas precisam ser iguais" : null) },
+            confirmPassword: {
+                validate: (value, values) => (
+                    values.password && value !== values.password ? "As senhas precisam ser iguais" : null
+                ),
+            },
         }
     );
 
@@ -94,7 +104,10 @@ export default function UserProfile() {
             <Form noValidate onSubmit={onSubmit} className={`p-2${loading ? " full-loading" : ""}`}>
                 <div className="mb-5 d-flex flex-wrap align-items-center gap-4">
                     <div className="text-center">
-                        <div className="profile-image-container" style={image ? { backgroundImage: `url("${image}")` } : undefined}>
+                        <div
+                            className="profile-image-container"
+                            style={image ? { backgroundImage: `url("${image}")` } : undefined}
+                        >
                             {!image && <Avatar name={current.firstname} size={120} className="border-0" />}
                             <button
                                 type="button"
@@ -105,7 +118,13 @@ export default function UserProfile() {
                             </button>
                         </div>
                         {image && <Button variant="link" size="sm" className="text-secondary mt-1" onClick={onRemoveImage}>Remover foto</Button>}
-                        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="d-none" onChange={onImageChange} />
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/gif,image/webp"
+                            className="d-none"
+                            onChange={onImageChange}
+                        />
                     </div>
                     <div>
                         {current.username && <span className="px-2 bg-light d-inline-block rounded text-secondary">{current.username}</span>}

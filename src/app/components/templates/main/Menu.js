@@ -76,7 +76,13 @@ function Item({ item, siblings, isMain, collapsed, onNavigate, onExpand }) {
         );
     } else if (item.type === "external_link" && item.link) {
         link = (
-            <a className={linkClass(false)} href={item.link} target="_blank" rel="noopener noreferrer" title={collapsed ? item.title : undefined}>
+            <a
+                className={linkClass(false)}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={collapsed ? item.title : undefined}
+            >
                 <ItemContent item={item} isMain={isMain} collapsed={collapsed} />
             </a>
         );

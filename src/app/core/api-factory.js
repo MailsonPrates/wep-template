@@ -10,18 +10,19 @@ const getType = (value) => {
 
 /**
  * Api factory: transforma o mapa de rotas de um módulo (gerado pelo `php app update`)
- * em funções de chamada.
+ * em funções de chamada. Só existem os métodos declarados no config/module.php do módulo.
  *
- * O front NÃO monta queries. Os métodos de banco seguem o contrato do CRUD automático:
+ * Cada método envia o payload como está, e o controller (<Módulo>Api.php) trata os dados:
  *
- *   UserGroupApi.get()                          lista (ordem e limite definidos no servidor)
- *   UserGroupApi.get(id)                        um registro pela chave primária
- *   UserGroupApi.get({status: "on", page: 2})   filtros declarados no módulo ('api' => ['filters' => [...]])
- *   UserGroupApi.create({name})
- *   UserGroupApi.update(id, {name})
- *   UserGroupApi.delete(id)
+ *   PedidoApi.get({ id: 3 })
+ *   PedidoApi.update({ id: 3, status: "pago" })
+ *   LoginApi.login({ username, password })
  *
- * Métodos customizados recebem o payload como está:  LoginApi.login({username, password})
+ * Exceção: rotas do CRUD automático do Core ('methods' => [...] no module.php, marcadas com
+ * `crud` no build) seguem o contrato {id, fields}, em que o front não monta queries:
+ *
+ *   XApi.get()  XApi.get(id)  XApi.get({status: "on", page: 2})
+ *   XApi.create({name})  XApi.update(id, {name})  XApi.delete(id)
  *
  * Opções da requisição (FormData, headers...):  UserProfileApi.requestOptions({data: fd}).salvar()
  */
@@ -148,11 +149,12 @@ function apiFactory(routes, config = {}) {
                         return request(buildRequest(route, args[0] ?? {}, options));
                     }
 
-                    // rotas customizadas podem se comportar como método de banco (custom.method)
-                    const method = route.custom?.method ?? route.method;
+                    // só o CRUD automático do Core (rotas de 'methods', marcadas com crud no build)
+                    // usa o contrato {id, fields}; os demais métodos enviam o payload como está
+                    const isCrud = route.crud === true && DB_METHODS.includes(route.method);
 
-                    if ( DB_METHODS.includes(method) ){
-                        const data = DB[method](args);
+                    if ( isCrud ){
+                        const data = DB[route.method](args);
 
                         if ( data.error ) return failure(data.error);
 

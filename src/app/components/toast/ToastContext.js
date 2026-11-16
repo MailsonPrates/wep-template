@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import ToastContainer from "./ToastContainer";
 
 const ToastContext = createContext(null);
@@ -36,20 +36,20 @@ function normalize(input = {}) {
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
 
-    const remove = useCallback((id) => {
+    const remove = (id) => {
         setToasts((list) => list.filter((toast) => toast.id !== id));
-    }, []);
+    };
 
-    const add = useCallback((input) => {
+    const add = (input) => {
         const toast = normalize(input);
 
         // mesmo id = mesmo aviso: não empilha duplicado
         setToasts((list) => (list.some((item) => item.id === toast.id) ? list : [...list, toast]));
 
         return { id: toast.id, remove: () => remove(toast.id) };
-    }, [remove]);
+    };
 
-    const value = useMemo(() => ({ add, remove }), [add, remove]);
+    const value = { add, remove };
 
     return (
         <ToastContext.Provider value={value}>
@@ -68,6 +68,8 @@ export function ToastProvider({ children }) {
  */
 export function useToast() {
     const context = useContext(ToastContext);
+
+    // identidade estável: o toast entra nas dependências do useAction
 
     return useMemo(() => {
         const add = context ? context.add : () => ({ id: null, remove() {} });

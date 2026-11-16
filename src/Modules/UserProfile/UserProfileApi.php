@@ -3,6 +3,7 @@
 namespace App\Modules\UserProfile;
  
 use Wep\Controller;
+use Wep\Router\Http\RouterHttpRequest;
 use Wep\Session;
 use App\Modules\User\Services\SaveUser;
 use App\Modules\User\User;
@@ -17,7 +18,7 @@ class UserProfileApi
 {
     use Controller;
  
-    public function salvar($request, $response)
+    public function salvar(RouterHttpRequest $request, Response $response)
     {
         $user_id = Session::get("user_id");
         $firstname = $request->firstname;

@@ -11,7 +11,10 @@ export default function ListState({ loading = false, items = [], empty, classNam
     const list = Array.isArray(items) ? items : [];
 
     return (
-        <div className={`${className}${loading ? " full-loading" : ""}`} style={loading && !list.length ? { minHeight: 120 } : undefined}>
+        <div
+            className={`${className}${loading ? " full-loading" : ""}`}
+            style={loading && !list.length ? { minHeight: 120 } : undefined}
+        >
             {list.length
                 ? list.map((item, index) => children(item, index))
                 : (!loading && <Empty message={empty} />)}

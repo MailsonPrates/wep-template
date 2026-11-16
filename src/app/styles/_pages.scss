@@ -48,6 +48,25 @@
 // Grupos de permissões (Admin > Grupo de usuários)
 .roles-module + .roles-module { margin-top: 1rem; }
 
+// cores fixas (não seguem Config > Visual): cinza quando desmarcado, verde quando marcado
+.roles-off { color: #595959; }
+
+.roles-badge {
+    display: inline-block;
+    padding: .35em .65em;
+    border-radius: $border-radius;
+    background: #939393;
+    color: $white;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: baseline;
+
+    &-sm { font-size: 8px; }
+
+    &.is-on { background: $success; }
+}
+
 // Lista ordenável de menus (Config > Menu)
 .sortable-ghost { opacity: .4; }
 .sortable-handle { cursor: grab; }

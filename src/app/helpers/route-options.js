@@ -23,7 +23,12 @@ export default function routeOptions(modules = [], { filter = () => true, placeh
 
         const moduleName = module.module_title || module.module_name || "";
 
-        options.push({ value: `module:${moduleName}`, text: `MÓDULO: ${moduleName.toUpperCase()}`, disabled: true, className: "fw-bold" });
+        options.push({
+            value: `module:${moduleName}`,
+            text: `MÓDULO: ${moduleName.toUpperCase()}`,
+            disabled: true,
+            className: "fw-bold",
+        });
 
         pages.forEach((page) => {
             options.push({ value: page.role, text: `${moduleName} > Página ${page.title || page.role}` });

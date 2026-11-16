@@ -12,20 +12,17 @@ return [
     'db' => [
         'table' => 'user_invite',
     ],
-    // CRUD automático: o front só envia id e campos (contrato em Wep\Api\ClientPayload)
+    // opções do Model (find, updateById, deleteById...). Sem 'methods' nas rotas não há CRUD
+    // automático: o front só chama as rotas declaradas abaixo.
     'api' => [
         'primary_key' => 'user_invite_id',
         'order_by' => ['user_invite_id', 'DESC'],
-        // o cliente só escolhe e-mail e grupo (create) e cancela (update de status, ver UserInviteApi);
-        // token, validade e uso são definidos no servidor
-        'fillable' => ['email', 'user_group_id', 'status'],
     ],
     'middlewares' => [],
     'constants' => [],
     'title' => "Convite de usuários",
     'routes' => [
         'path' => '/admin/user/invite',
-        'methods' => ['get', 'create', 'update', 'delete'],
         'use_middlewares' => ['isLogged', 'checkPermission'],
         'groups' => [
             [
@@ -35,6 +32,26 @@ return [
             [
                 'path' => '/create',
                 'view' => 'UserInviteCreate',
+            ],
+            [
+                'path' => '/get',
+                'method' => 'get',
+                'label' => 'listar'
+            ],
+            [
+                'path' => '/create',
+                'method' => 'create',
+                'label' => 'criar'
+            ],
+            [
+                'path' => '/update',
+                'method' => 'update',
+                'label' => 'cancelar'
+            ],
+            [
+                'path' => '/delete',
+                'method' => 'delete',
+                'label' => 'deletar'
             ],
             [
                 'path' => '/resend',

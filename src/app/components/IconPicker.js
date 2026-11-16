@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import SvgIcon from "./SvgIcon";
 
@@ -47,14 +47,11 @@ export default function IconPicker({ value = "", onChange }) {
         return () => { active = false; };
     }, [open, value]);
 
-    const names = useMemo(() => {
-        if (!catalog) return [];
-
-        const term = search.trim().toLowerCase();
-        const all = Object.keys(catalog);
-
-        return term ? all.filter((name) => label(name).includes(term) || name.toLowerCase().includes(term)) : all;
-    }, [catalog, search]);
+    const term = search.trim().toLowerCase();
+    const all = catalog ? Object.keys(catalog) : [];
+    const names = term
+        ? all.filter((name) => label(name).includes(term) || name.toLowerCase().includes(term))
+        : all;
 
     const current = value && catalog ? catalog[value] : null;
 

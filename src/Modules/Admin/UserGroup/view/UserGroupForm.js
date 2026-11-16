@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { Form } from "react-bootstrap";
 import { UserGroupApi } from "api";
 import { Field, FormActions } from "components";
@@ -21,7 +21,7 @@ export default function UserGroupForm({ id, onSaved }) {
     const isUpdate = Boolean(id);
 
     const modules = useApi(() => UserGroupApi.getRoles(), [], { initial: [] });
-    const group = useApi(() => UserGroupApi.get(id), [id], { enabled: isUpdate });
+    const group = useApi(() => UserGroupApi.get({ id }), [id], { enabled: isUpdate });
 
     const form = useForm(
         { name: "", home_role: DEFAULT_HOME, roles: [] },
@@ -40,13 +40,10 @@ export default function UserGroupForm({ id, onSaved }) {
 
     const { roles, home_role: homeRole } = form.values;
 
-    const homeOptions = useMemo(
-        () => routeOptions(modules.data || [], {
-            placeholder: false,
-            filter: (page) => page.role === DEFAULT_HOME || roles.includes(page.role),
-        }),
-        [modules.data, roles]
-    );
+    const homeOptions = routeOptions(modules.data || [], {
+        placeholder: false,
+        filter: (page) => page.role === DEFAULT_HOME || roles.includes(page.role),
+    });
 
     // página inicial desmarcada nas permissões: volta para a Home
     useEffect(() => {
@@ -54,10 +51,10 @@ export default function UserGroupForm({ id, onSaved }) {
 
         const available = homeOptions.some((option) => !option.disabled && option.value === homeRole);
         if (!available && homeRole !== DEFAULT_HOME) form.set("home_role", DEFAULT_HOME);
-    }, [homeOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [modules.data, roles, homeRole]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [save, { loading: saving }] = useAction(
-        (payload) => (isUpdate ? UserGroupApi.update(id, payload) : UserGroupApi.create(payload)),
+        (payload) => (isUpdate ? UserGroupApi.update({ id, ...payload }) : UserGroupApi.create(payload)),
         { success: "Grupo salvo" }
     );
 
@@ -73,7 +70,11 @@ export default function UserGroupForm({ id, onSaved }) {
     };
 
     return (
-        <Form noValidate onSubmit={onSubmit} className={`p-2${modules.loading || group.loading || saving ? " full-loading" : ""}`}>
+        <Form
+            noValidate
+            onSubmit={onSubmit}
+            className={`p-2${modules.loading || group.loading || saving ? " full-loading" : ""}`}
+        >
             <FormActions back="/admin/user/group/" saving={saving} />
             <Field label="Nome" {...form.field("name")} />
             <Field

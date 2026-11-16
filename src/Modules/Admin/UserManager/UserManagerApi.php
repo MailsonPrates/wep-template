@@ -1,56 +1,47 @@
 <?php
- 
+
 namespace App\Modules\Admin\UserManager;
- 
+
 use Wep\Controller;
 use Wep\Response;
+use Wep\Router\Http\RouterHttpRequest;
 use App\Modules\User\Services\UserService;
-use App\Modules\User\User;
-use Wep\Api\InvalidPayloadException;
 
 /**
- * Classe controller responsável por implementar métodos
- * que lidam com as requisições vindas do front
+ * Usuários (admin). O front envia o payload livre; o UserService escolhe e valida os campos.
  */
 class UserManagerApi
 {
     use Controller;
 
     /**
-     * get() lista os usuários; get(id) devolve a lista com um usuário (formato usado pela view).
+     * get(): lista os usuários; get({id}): a lista com um usuário (formato usado pela view).
      */
-    public function get($request, $response)
+    public function get(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $payload = User::clientPayload('get');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
+        $id = (int) ($request->id ?? 0);
 
-        return $response->json(UserService::get(isset($payload['id']) ? ['user_id' => $payload['id']] : []));
+        return $response->json(UserService::get($id ? ['user_id' => $id] : []));
     }
 
-    public function delete($request, $response)
+    public function delete(RouterHttpRequest $request, Response $response)
     {
-        try {
-            $payload = User::clientPayload('delete');
-        } catch (InvalidPayloadException $e) {
-            return $response->json(Response::error($e->getMessage()));
-        }
+        $id = (int) ($request->id ?? 0);
 
-        return $response->json(UserService::delete($payload['id']));
+        if ( !$id ) return $response->json(Response::error('Usuário não encontrado'));
+
+        return $response->json(UserService::delete($id));
     }
 
-    public function save($request, $response)
+    public function save(RouterHttpRequest $request, Response $response)
     {
-        $data = $request->data();
-        return $response->json(UserService::save($data));
+        return $response->json(UserService::save($request->data()));
     }
 
-    public function resetPassword($request, $response)
+    public function resetPassword(RouterHttpRequest $request, Response $response)
     {
-        $data = $request->data();
-        return $response->json(UserService::resetPassword($data));
+        return $response->json(UserService::resetPassword([
+            'user_id' => (int) ($request->user_id ?? 0),
+        ]));
     }
- 
 }

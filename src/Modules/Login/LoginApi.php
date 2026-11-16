@@ -9,6 +9,7 @@ use App\Modules\User\Services\SaveUser;
 use App\Modules\User\Services\UserService;
 use App\Modules\User\User;
 use Wep\Controller;
+use Wep\Router\Http\RouterHttpRequest;
 use Wep\Response;
 use Wep\Security\RateLimiter;
 use Wep\Security\Token;
@@ -29,7 +30,7 @@ class LoginApi
     private const MAX_ATTEMPTS_IP = 30;
     private const DECAY = 900;
 
-    public function login($request, $response)
+    public function login(RouterHttpRequest $request, Response $response)
     {
         $username = trim((string) ($request->username ?? ''));
         $password = (string) ($request->password ?? '');
@@ -39,9 +40,17 @@ class LoginApi
         $userKey = 'login:' . mb_strtolower($username) . '|' . $request->ip();
         $ipKey = 'login-ip:' . $request->ip();
 
-        if ( $limiter->tooManyAttempts($userKey, self::MAX_ATTEMPTS_USER) || $limiter->tooManyAttempts($ipKey, self::MAX_ATTEMPTS_IP) ){
-            $minutes = (int) ceil(max($limiter->availableIn($userKey), $limiter->availableIn($ipKey)) / 60);
-            return $response->json(Response::error("Muitas tentativas. Tente novamente em $minutes minuto(s).", ['http_code' => 429]));
+        $blocked = $limiter->tooManyAttempts($userKey, self::MAX_ATTEMPTS_USER)
+            || $limiter->tooManyAttempts($ipKey, self::MAX_ATTEMPTS_IP);
+
+        if ( $blocked ){
+            $wait = max($limiter->availableIn($userKey), $limiter->availableIn($ipKey));
+            $minutes = (int) ceil($wait / 60);
+
+            return $response->json(Response::error(
+                "Muitas tentativas. Tente novamente em $minutes minuto(s).",
+                ['http_code' => 429]
+            ));
         }
 
         $user = Auth::findActiveByUsername($username);
@@ -95,7 +104,7 @@ class LoginApi
         ]));
     }
 
-    public function recovery($request, $response)
+    public function recovery(RouterHttpRequest $request, Response $response)
     {
         $email = trim((string) ($request->email ?? ""));
 
@@ -143,7 +152,7 @@ class LoginApi
         }
     }
 
-    public function handleUpdatePassword($request, $response)
+    public function handleUpdatePassword(RouterHttpRequest $request, Response $response)
     {
         $password = (string) ($request->password ?? "");
         $code = (string) ($request->code ?? "");
@@ -176,7 +185,7 @@ class LoginApi
         }
     }
 
-    public function validateRecoveryCode($request, $response)
+    public function validateRecoveryCode(RouterHttpRequest $request, Response $response)
     {
         $code = (string) ($request->code ?? "");
 

@@ -28,8 +28,8 @@ service apache2 restart
 ```
 composer create-project wep/project meu-app   # já copia config/.env.example para config/.env
 cd meu-app
-php app install                               # pergunta banco e admin; cria tabelas, admin e o menu padrão
-npm ci && npm run prod                        # build do front
+php app install                               # pergunta banco e admin; cria tabelas, admin, o menu padrão
+                                              # e compila o front (npm ci quando precisa + npm run prod)
 ```
 
 Clonou pelo git? Copie o `.env` antes: `cp config/.env.example config/.env` (o `config/.env` não vai para o git).
@@ -61,9 +61,12 @@ liberada para todo usuário logado.
 ```
 npm ci            # instala as versões exatas do package-lock.json
 npm run dev       # build de desenvolvimento + watch (roda "php app update" quando um config/module.php muda)
-npm run prod      # build de produção
+npm run prod      # build de produção (antes roda `npm ci` se o node_modules faltar ou não bater com o lock)
 npm run icons     # regera só o catálogo de ícones do menu
 ```
+
+O React Compiler está ligado no build (`babel-plugin-react-compiler`): escreva componentes simples, sem
+`useMemo`/`useCallback`/`React.memo` por desempenho.
 
 O build gera:
 - `public/assets/view/` — JS (as telas são carregadas sob demanda; `storage/builds/view-assets.build.php` lista só o entrypoint);
@@ -79,16 +82,27 @@ Base do front (`src/app`):
 - `hooks`: `useApi` (carregar dados), `useAction` (salvar/remover com toast e confirmação), `useForm` (campos e validação), `useToast`;
 - `components`: `TemplateMain`, `TemplateClean`, `AuthPage`, `Field`, `Password`, `FormActions`, `ListState`, `LinkCards`, `Avatar`, `Logo`, `IconPicker`, `SvgIcon`.
 
-Chamadas à API (`App.request` e as APIs geradas, ex.: `UserApi.get(id)`) sempre resolvem com o corpo da
+As APIs geradas (`import { UserGroupApi } from "api"`) têm só os métodos declarados nas rotas do
+`config/module.php` (o template não usa o CRUD automático). O payload chega ao controller como enviado:
+`UserGroupApi.update({ id, name })` → `$request->id`, `$request->name`.
+
+Chamadas à API (`App.request` e as APIs geradas, ex.: `UserGroupApi.get({ id })`) sempre resolvem com o corpo da
 resposta: trate com `if (res.error) ...`. Sessão expirada (401) leva ao login e volta à página depois;
 sem permissão (403) volta como `{error: true, http_code: 403, message}`.
 
 ### Aparência (Config > Visual)
 
-As cores dos botões e da barra superior viram `public/assets/css/theme.css` (variáveis do Bootstrap),
-gerado no servidor ao salvar e no `php app update`. O logo enviado fica em `public/assets/images/logo/` e o
-site usa uma versão WebP em `public/assets/images/cache/logo/`. Sem logo personalizado vale
-`public/assets/images/logo.png`.
+Cores (botões, barra superior, título das páginas), fonte do Google Fonts (lista com os pesos certos ou
+qualquer outro nome, só com o peso normal) e tamanho do título viram `public/assets/css/theme.css`
+(variáveis do Bootstrap), gerado no servidor ao salvar e no `php app update`. A cor primária vale também
+para links, foco dos campos e checkbox.
+
+Imagens: logo, logo para fundo escuro (usado quando a barra superior é escura; sem ele vale o logo normal)
+e favicon (geradas as versões PNG 32x32 e 180x180). Os originais ficam em `public/assets/images/logo/` e
+`favicon/`; o site usa as versões do `Wep\ImageCache` em `public/assets/images/cache/`. Sem imagem
+personalizada valem `public/assets/images/logo.png` e `favicon.png`. No front: `<Logo />`, `<Logo dark />`.
+
+Fotos de perfil: o original fica guardado e a nav usa a versão `.webp` do cache.
 
 ### Ícones do menu
 
